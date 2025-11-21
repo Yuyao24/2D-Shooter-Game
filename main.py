@@ -17,4 +17,5 @@ while True:
     screen.fill((0, 0, 0))  # Clear screen with solid colour
 
     pygame.display.flip()   # Update the display
-    clock.tick(60)         # Maintain 60 FPS
+    clock.tick(60) # Maintain 60 FPS
+    dt = clock.get_time() / 1000  # Delta time in seconds
