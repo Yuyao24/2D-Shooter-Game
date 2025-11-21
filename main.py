@@ -18,4 +18,4 @@ while True:
 
     pygame.display.flip()   # Update the display
     clock.tick(60) # Maintain 60 FPS
-    dt = clock.get_time() / 1000  # Delta time in seconds
+    dt = clock.get_time() / 1000  # Time since last frame
