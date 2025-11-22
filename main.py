@@ -10,23 +10,19 @@ class Game:
 
         self.running = True
 
-    def handle_events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
-
-    def render(self):
-        self.screen.fill((0, 0, 0))  # Clear screen with solid colour
-        pygame.display.flip()        # Update the display
-
     def run(self):
         while self.running:
-            self.handle_events()
-            self.render()
-            self.clock.tick(60)  # Maintain 60 FPS
-            dt = self.clock.get_time() / 1000  # Time since last frame
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
 
-        pygame.quit()
+            self.screen.fill((0, 0, 0))  # Clear screen with solid colour
+
+            pygame.display.flip()        # Update the display
+            self.clock.tick(60)         # Maintain 60 FPS
+            dt = self.clock.tick(60) / 1000  # Time since last frame
+
+        pygame.quit() # Quit Pygame
         sys.exit()  # Prevents Pygame quit error
 
 if __name__ == "__main__": # Prevents code from running on import
