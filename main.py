@@ -8,19 +8,23 @@ class Game:
         self.screen = pygame.display.set_mode((1280, 720))  # 16:9 aspect ratio
         self.clock = pygame.time.Clock() # Set up clock timer
 
-        self.running = True
+        self.running = True # Game loop flag
+
+        self.game_state = "MAIN_MENU"  # Initial game state
+                                       # Possible states: MAIN_MENU, PLAYING, PAUSED, UPGRADING, GAME_OVER
 
     def run(self):
         while self.running: # Main game loop
-            for event in pygame.event.get(): # Event handling
-                if event.type == pygame.QUIT:
-                    self.running = False      # Stop the game loop
-
-            self.screen.fill((0, 0, 0))  # Clear screen with solid colour
-
-            pygame.display.flip()        # Update the display
-            self.clock.tick(60)         # Maintain 60 FPS
-            dt = self.clock.tick(60) / 1000  # Time since last frame
+            if self.game_state == "MAIN_MENU":
+                pass
+            elif self.game_state == "PLAYING":
+                pass
+            elif self.game_state == "PAUSED":
+                pass
+            elif self.game_state == "UPGRADING":
+                pass
+            elif self.game_state == "GAME_OVER":
+                pass
 
         pygame.quit() # Quit Pygame
         sys.exit()  # Prevents Pygame quit error
