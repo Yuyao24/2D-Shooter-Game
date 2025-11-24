@@ -23,9 +23,10 @@ class Button:
         screen.blit(self.text_surf, self.text_rect)
 
     def is_clicked(self): # Checks if button is clicked
-        mouse_pos = pygame.mouse.get_pos() # Gets x,y values of mouse
-        if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(mouse_pos):
-                print('Clicked')
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # Button 1 is left click
+            if self.rect.collidepoint(event.pos):
+                return True
+        return False
 
 pygame.init()
 pygame.display.set_caption("Menu gui test")
@@ -40,10 +41,12 @@ while True:
             pygame.quit()
             sys.exit()
 
-    screen.fill((0,0,0))
+        if button1.is_clicked():
+            print("Button clicked!")
+
+    screen.fill("#FFFFFF")
 
     button1.draw()
-    button1.is_clicked()
 
     pygame.display.flip()
     clock.tick(60)
