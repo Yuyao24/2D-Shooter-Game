@@ -1,5 +1,6 @@
 import pygame
 import sys
+from menus import *
 
 class Game:
     def __init__(self):
@@ -16,15 +17,17 @@ class Game:
     def run(self) -> None:
         while self.running: # Main game loop
             if self.game_state == "MAIN_MENU":
-                pass
+                self.game_state = main_menu(self.screen, self.clock)
             elif self.game_state == "PLAYING":
-                pass
+                print("Game is playing...")  # Placeholder for game logic
             elif self.game_state == "PAUSED":
                 pass
             elif self.game_state == "UPGRADING":
                 pass
             elif self.game_state == "GAME_OVER":
                 pass
+            elif self.game_state == "QUIT":
+                self.running = False
 
         pygame.quit() # Quit Pygame
         sys.exit()  # Prevents Pygame quit error

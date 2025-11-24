@@ -22,40 +22,44 @@ class Button:
         self.text_rect = self.text_surf.get_rect(center=self.rect.center)
 
 
-    def draw(self) -> None: # Render button
+    def draw(self, screen) -> None: # Render button
         pygame.draw.rect(screen, self.colour, self.rect)
         pygame.draw.rect(screen, "Black", self.rect, 3) # Border
         screen.blit(self.text_surf, self.text_rect)
 
-    def is_clicked(self): # Checks if button is clicked
+    def is_clicked(self, event): # Checks if button is clicked
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # Button 1 is left click
             if self.rect.collidepoint(event.pos):
                 return True
         return False
 
-pygame.init()
-pygame.display.set_caption("Menu gui test")
-screen = pygame.display.set_mode((1280, 720))
-clock = pygame.time.Clock()
+def main_menu(screen, clock) -> str:
+    running: bool = True
 
-button1 = Button("Button", (640,360), 150, 100)
+    resume_game_button = Button("Resume Game", (640, 300), 300, 80)
+    new_game_button = Button("New Game", (640, 450), 300, 80)
+    quit_button = Button("Quit Game", (640, 600), 300, 80)
 
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
+    while running:
+        for event in pygame.event.get():
+            if quit_button.is_clicked(event) or event.type == pygame.QUIT:
+                return "QUIT"  # Change game state to QUIT
+            if resume_game_button.is_clicked(event):
+                return "PLAYING"  # Change game state to PLAYING
+            if new_game_button.is_clicked(event):
+                return "PLAYING"  # Change game state to PLAYING
 
-        if button1.is_clicked():
-            print("Button clicked!")
+        screen.fill("#FFFFFF")  # Clear screen with white background
 
-    screen.fill("#FFFFFF")
+        new_game_button.draw(screen)
+        resume_game_button.draw(screen)
+        quit_button.draw(screen)
 
-    button1.draw()
+        pygame.display.flip()
+        clock.tick(60)
 
-    pygame.display.flip()
-    clock.tick(60)
-
+    pygame.quit() # Quit Pygame
+    sys.exit() # Prevents Pygame quit error
 
 
 
