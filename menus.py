@@ -24,8 +24,7 @@ class Button:
 
     def is_clicked(self): # Checks if button is clicked
         mouse_pos = pygame.mouse.get_pos() # Gets x,y values of mouse
-        if pygame.mouse.get_pressed()[0]:
-            if self.rect.collidepoint(mouse_pos):
+        if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(mouse_pos):
                 print('Clicked')
 
 pygame.init()

@@ -8,10 +8,10 @@ class Game:
         self.screen = pygame.display.set_mode((1280, 720))  # 16:9 aspect ratio
         self.clock = pygame.time.Clock() # Set up clock timer
 
-        self.running = True # Game loop flag
+        self.running: bool = True # Game loop flag
 
-        self.game_state = "MAIN_MENU"  # Initial game state
-                                       # Possible states: MAIN_MENU, PLAYING, PAUSED, UPGRADING, GAME_OVER
+        self.game_state: str = "MAIN_MENU"  # Initial game state
+                                            # Possible states: MAIN_MENU, PLAYING, PAUSED, UPGRADING, GAME_OVER
 
     def run(self):
         while self.running: # Main game loop
