@@ -13,7 +13,7 @@ class Game:
         self.game_state: str = "MAIN_MENU"  # Initial game state
                                             # Possible states: MAIN_MENU, PLAYING, PAUSED, UPGRADING, GAME_OVER
 
-    def run(self):
+    def run(self) -> None:
         while self.running: # Main game loop
             if self.game_state == "MAIN_MENU":
                 pass

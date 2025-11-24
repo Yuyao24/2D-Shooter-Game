@@ -18,7 +18,7 @@ class Button:
         self.text_surf = self.font.render(text, True, "#FFFFFF")
         self.text_rect = self.text_surf.get_rect(center=self.rect.center)
 
-    def draw(self): # Render button
+    def draw(self) -> None: # Render button
         pygame.draw.rect(screen, self.colour, self.rect)
         screen.blit(self.text_surf, self.text_rect)
 
