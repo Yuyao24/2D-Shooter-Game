@@ -36,9 +36,9 @@ class Button:
 def main_menu(screen, clock) -> str:
     running: bool = True
 
-    resume_game_button = Button("Resume Game", (640, 300), 300, 80)
-    new_game_button = Button("New Game", (640, 450), 300, 80)
-    quit_button = Button("Quit Game", (640, 600), 300, 80)
+    resume_game_button = Button("Resume Game", (640, 300), 300, 120)
+    new_game_button = Button("New Game", (640, 450), 300, 120)
+    quit_button = Button("Quit", (640, 600), 300, 120)
 
     while running:
         for event in pygame.event.get():
