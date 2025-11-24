@@ -13,7 +13,6 @@ class Button:
 
         # Button rectangle
         self.rect = pygame.Rect(position, (width, height))
-        self.rect.center = position
 
         # Text
         self.text_surf = self.font.render(text, True, "#FFFFFF")
@@ -23,14 +22,18 @@ class Button:
         pygame.draw.rect(screen, self.colour, self.rect)
         screen.blit(self.text_surf, self.text_rect)
 
-
+    def is_clicked(self): # Checks if button is clicked
+        mouse_pos = pygame.mouse.get_pos() # Gets x,y values of mouse
+        if pygame.mouse.get_pressed()[0]:
+            if self.rect.collidepoint(mouse_pos):
+                print('Clicked')
 
 pygame.init()
 pygame.display.set_caption("Menu gui test")
 screen = pygame.display.set_mode((1280, 720))
 clock = pygame.time.Clock()
 
-button1 = Button("Hello", (640,360), 150, 100, "Blue")
+button1 = Button("Hello", (50,50), 150, 100, "Blue")
 
 while True:
     for event in pygame.event.get():
@@ -41,6 +44,7 @@ while True:
     screen.fill((0,0,0))
 
     button1.draw()
+    button1.is_clicked()
 
     pygame.display.flip()
     clock.tick(60)
