@@ -4,14 +4,14 @@ import sys
 
 class Button:
     def __init__(self, text: str, position: tuple[int, int], width: int, height: int,
-                 colour: str = "#00A2E8", font_size: int = 40) -> None:
+                 colour: str = "#00A2E8", font_size: int = 50) -> None:
         self.text = text
         self.position = position
         self.width = width
         self.height = height
         self.colour = colour
         self.font_size = font_size
-        self.font = pygame.font.SysFont("Gotham Rounded", font_size)
+        self.font = pygame.font.SysFont("Gotham", font_size)
 
         # Button rectangle
         self.rect = pygame.Rect(position, (width, height))
@@ -36,6 +36,17 @@ class Button:
 def main_menu(screen, clock) -> str:
     running: bool = True
 
+    # Load high score
+    score_file = open("game_save/highscore.txt", "r")
+    high_score = score_file.read()
+    score_file.close()
+
+    # Create high score text
+    score_font = pygame.font.SysFont("Gotham", 100)
+    high_score_surf = score_font.render(f"High Score: {high_score}", True, "#3F48CC")
+    high_score_rect = high_score_surf.get_rect(center=(640, 120))
+
+    # Create buttons
     resume_game_button = Button("Resume Game", (640, 300), 300, 120)
     new_game_button = Button("New Game", (640, 450), 300, 120)
     quit_button = Button("Quit", (640, 600), 300, 120)
@@ -51,11 +62,15 @@ def main_menu(screen, clock) -> str:
 
         screen.fill("#FFFFFF")  # Clear screen with white background
 
+        # Render buttons
         new_game_button.draw(screen)
         resume_game_button.draw(screen)
         quit_button.draw(screen)
 
-        pygame.display.flip()
+        # Render high score
+        screen.blit(high_score_surf, high_score_rect)
+
+        pygame.display.flip() # Update display
         clock.tick(60)
 
     pygame.quit() # Quit Pygame

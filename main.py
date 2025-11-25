@@ -19,7 +19,7 @@ class Game:
             if self.game_state == "MAIN_MENU":
                 self.game_state = main_menu(self.screen, self.clock)
             elif self.game_state == "PLAYING":
-                print("Game is playing...")  # Placeholder for game logic
+                pass
             elif self.game_state == "PAUSED":
                 pass
             elif self.game_state == "UPGRADING":
