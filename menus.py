@@ -34,15 +34,18 @@ class Button:
 
     def is_clicked(self, event) -> bool: # Checks if button is clicked
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # Button 1 is left click
-            if self.rect.collidepoint(event.pos):
+            if self.is_hovered():
                 return True
         return False
 
     def is_hovered(self) -> bool:
         mouse_pos = pygame.mouse.get_pos()
         if self.rect.collidepoint(mouse_pos):
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
             return True
-        return False
+        else:
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+            return False
 
 def main_menu(screen, clock) -> str:
     running: bool = True
