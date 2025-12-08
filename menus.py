@@ -23,14 +23,25 @@ class Button:
 
 
     def draw(self, screen) -> None: # Render button
-        pygame.draw.rect(screen, self.colour, self.rect)
-        pygame.draw.rect(screen, "Black", self.rect, 3) # Border
-        screen.blit(self.text_surf, self.text_rect)
+        if self.is_hovered():
+            pygame.draw.rect(screen, "White", self.rect)
+            pygame.draw.rect(screen, self.colour, self.rect, 3) # Border
+            screen.blit(self.text_surf, self.text_rect)
+        else:
+            pygame.draw.rect(screen, self.colour, self.rect)
+            pygame.draw.rect(screen, "Black", self.rect, 3) # Border
+            screen.blit(self.text_surf, self.text_rect)
 
-    def is_clicked(self, event): # Checks if button is clicked
+    def is_clicked(self, event) -> bool: # Checks if button is clicked
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # Button 1 is left click
             if self.rect.collidepoint(event.pos):
                 return True
+        return False
+
+    def is_hovered(self) -> bool:
+        mouse_pos = pygame.mouse.get_pos()
+        if self.rect.collidepoint(mouse_pos):
+            return True
         return False
 
 def main_menu(screen, clock) -> str:
