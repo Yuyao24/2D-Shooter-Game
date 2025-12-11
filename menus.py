@@ -40,12 +40,7 @@ class Button:
 
     def is_hovered(self) -> bool:
         mouse_pos = pygame.mouse.get_pos()
-        if self.rect.collidepoint(mouse_pos):
-            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
-            return True
-        else:
-            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
-            return False
+        return self.rect.collidepoint(mouse_pos)
 
 def main_menu(screen, clock) -> str:
     running: bool = True
@@ -64,6 +59,7 @@ def main_menu(screen, clock) -> str:
     resume_game_button = Button("Resume Game", (640, 300), 300, 120)
     new_game_button = Button("New Game", (640, 450), 300, 120)
     quit_button = Button("Quit", (640, 600), 300, 120)
+    buttons = [resume_game_button, new_game_button, quit_button]
 
     while running:
         for event in pygame.event.get():
@@ -74,12 +70,18 @@ def main_menu(screen, clock) -> str:
             if new_game_button.is_clicked(event):
                 return "PLAYING"  # Change game state to PLAYING
 
+        # Update cursor
+        mouse_pos = pygame.mouse.get_pos()
+        if any(button.rect.collidepoint(mouse_pos) for button in buttons):
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+        else:
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+
         screen.fill("#FFFFFF")  # Clear screen with white background
 
         # Render buttons
-        new_game_button.draw(screen)
-        resume_game_button.draw(screen)
-        quit_button.draw(screen)
+        for button in buttons:
+            button.draw(screen)
 
         # Render high score
         screen.blit(high_score_surf, high_score_rect)
