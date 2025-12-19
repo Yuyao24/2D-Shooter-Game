@@ -71,8 +71,7 @@ def main_menu(screen, clock) -> str:
                 return "PLAYING"  # Change game state to PLAYING
 
         # Update cursor
-        mouse_pos = pygame.mouse.get_pos()
-        if any(button.rect.collidepoint(mouse_pos) for button in buttons):
+        if any(button.is_hovered() for button in buttons):
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
         else:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
