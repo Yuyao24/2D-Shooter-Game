@@ -1,5 +1,6 @@
 import pygame
 import sys
+import time
 from menus import *
 
 class Game:
@@ -29,6 +30,7 @@ class Game:
             elif self.game_state == "QUIT":
                 self.running = False
 
+        time.sleep(0.15) # Delay to allow sound effects to finish
         pygame.quit() # Quit Pygame
         sys.exit()  # Prevents Pygame quit error
 

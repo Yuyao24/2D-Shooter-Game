@@ -1,6 +1,6 @@
 import pygame
 import sys
-
+from sound_effects import *
 
 class Button:
     def __init__(self, text: str, position: tuple[int, int], width: int, height: int,
@@ -35,6 +35,7 @@ class Button:
     def is_clicked(self, event) -> bool: # Checks if button is clicked
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # Button 1 is left click
             if self.is_hovered():
+                play_sound("button_click", 0.5)
                 return True
         return False
 
