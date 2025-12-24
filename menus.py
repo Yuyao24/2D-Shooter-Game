@@ -1,6 +1,6 @@
 import pygame
 import sys
-from sound_effects import *
+from sound_system import *
 
 class Button:
     def __init__(self, text: str, position: tuple[int, int], width: int, height: int,
