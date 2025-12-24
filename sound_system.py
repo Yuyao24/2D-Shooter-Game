@@ -1,5 +1,4 @@
 import pygame
-import time
 
 sounds = {"button_click": "audio/button_click.wav",}
 
