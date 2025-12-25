@@ -2,6 +2,8 @@ import pygame
 import sys
 import time
 from menus import *
+from gameplay import *
+from player import *
 
 class Game:
     def __init__(self):
@@ -15,14 +17,19 @@ class Game:
         self.game_state: str = "MAIN_MENU"  # Initial game state
                                             # Possible states: MAIN_MENU, PLAYING, PAUSED, UPGRADING, GAME_OVER
 
+        self.player = pygame.sprite.GroupSingle()
+        self.player.add(Player())
+        
     def run(self) -> None:
         while self.running: # Main game loop
             if self.game_state == "MAIN_MENU":
                 self.game_state = main_menu(self.screen, self.clock)
             elif self.game_state == "PLAYING":
-                pass
+                self.game_state = gameplay_loop(self.screen, self.clock, self.player)
             elif self.game_state == "PAUSED":
-                pass
+                # Capture the current screen to use as a background for the pause menu
+                background_snapshot = self.screen.copy()
+                self.game_state = pause_menu(self.screen, self.clock, background_snapshot)
             elif self.game_state == "UPGRADING":
                 pass
             elif self.game_state == "GAME_OVER":
