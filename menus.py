@@ -88,7 +88,8 @@ def main_menu(screen, clock) -> str:
         pygame.display.flip() # Update display
         clock.tick(60)
 
-def pause_menu(screen, clock, background) -> str:
+def pause_menu(screen, clock) -> str:
+    background = screen.copy()
 
     # Game paused text
     paused_font = pygame.font.SysFont("Gotham", 100)
