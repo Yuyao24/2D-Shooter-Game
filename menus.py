@@ -1,5 +1,3 @@
-import pygame
-import sys
 from sound_system import *
 
 class Button:
