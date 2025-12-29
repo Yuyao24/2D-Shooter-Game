@@ -9,7 +9,7 @@ def gameplay_loop(screen, clock) -> str:
     player = pygame.sprite.GroupSingle()
     player.add(Player())
 
-    paused = False
+    paused: bool = False
     upgrading = False
     game_over = False
 
@@ -23,7 +23,7 @@ def gameplay_loop(screen, clock) -> str:
                 if event.key == pygame.K_ESCAPE:
                     paused = True
 
-        if paused:
+        if paused: # Check if paused
             next_state = pause_menu(screen, clock)
             if next_state == "PLAYING":
                 paused = False

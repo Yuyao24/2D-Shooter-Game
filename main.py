@@ -28,6 +28,8 @@ class Game:
                 pass
             elif self.game_state == "QUIT":
                 self.running = False
+            elif self.game_state == "PAUSED":
+                self.game_state = pause_menu(self.screen, self.clock)
 
         time.sleep(0.15) # Delay to allow sound effects to finish
         pygame.quit() # Quit Pygame
