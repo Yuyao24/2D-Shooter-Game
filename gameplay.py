@@ -29,6 +29,8 @@ def gameplay_loop(screen, clock) -> str:
                 paused = False
             elif next_state == "MAIN_MENU":
                 return next_state # Return to game class to call main_menu()
+            elif next_state == "QUIT":
+                return next_state # Return to game class to call quit()
 
         if upgrading:
             pass

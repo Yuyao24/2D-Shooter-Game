@@ -1,4 +1,3 @@
-import sys
 from sound_system import *
 
 class Button:
@@ -110,7 +109,7 @@ def pause_menu(screen, clock) -> str:
     while True:
         for event in pygame.event.get(): # Event loop
             if event.type == pygame.QUIT:
-                sys.exit()
+                return "QUIT"
             if quit_button.is_clicked(event):
                 return "MAIN_MENU"  # Change game state to MAIN MENU
             if resume_button.is_clicked(event) or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
