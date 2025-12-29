@@ -16,7 +16,7 @@ def gameplay_loop(screen, clock) -> str:
     while True:
         dt = clock.tick(60) / 1000  # Delta time in seconds
 
-        for event in pygame.event.get():
+        for event in pygame.event.get(): # Event loop
             if event.type == pygame.QUIT:
                 return "QUIT"
             if event.type == pygame.KEYDOWN:

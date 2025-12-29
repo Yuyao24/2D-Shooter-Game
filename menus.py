@@ -9,7 +9,7 @@ class Button:
         self.height = height
         self.colour = colour
         self.font_size = font_size
-        self.font = pygame.font.SysFont("Gotham", font_size)
+        self.font = pygame.font.SysFont(None, font_size)
 
         # Button rectangle
         self.rect = pygame.Rect(position, (width, height))
@@ -51,7 +51,7 @@ def main_menu(screen, clock) -> str:
         high_score = "0"
 
     # Create high-score text
-    score_font = pygame.font.SysFont("Gotham", 100)
+    score_font = pygame.font.SysFont(None, 100)
     high_score_surf = score_font.render(f"High Score: {high_score}", True, "#3F48CC")
     high_score_rect = high_score_surf.get_rect(center=(640, 120))
 
@@ -62,7 +62,7 @@ def main_menu(screen, clock) -> str:
     buttons = [resume_game_button, new_game_button, quit_button]
 
     while True:
-        for event in pygame.event.get():
+        for event in pygame.event.get(): # Event loop
             if quit_button.is_clicked(event) or event.type == pygame.QUIT:
                 return "QUIT"  # Change game state to QUIT
             if resume_game_button.is_clicked(event):
@@ -89,25 +89,25 @@ def main_menu(screen, clock) -> str:
         clock.tick(60)
 
 def pause_menu(screen, clock) -> str:
-    background = screen.copy()
+    background = screen.copy()# Take screenshot of background
 
     # Game paused text
-    paused_font = pygame.font.SysFont("Gotham", 100)
+    paused_font = pygame.font.SysFont(None, 100)
     paused_surf = paused_font.render("Game Paused", True, "#3F48CC")
-    paused_rect = paused_surf.get_rect(center=(640, 100))
+    paused_rect = paused_surf.get_rect(center=(640, 150))
 
     # Create buttons
     resume_button = Button("Resume", (640, 325), 300, 120)
-    quit_button = Button("Quit Game", (640, 470), 300, 120)
+    quit_button = Button("Save and Quit", (640, 470), 300, 120)
     buttons = [resume_button, quit_button]
 
-    # Create a semi-transparent overlay
+    # Create a transparent overlay
     overlay = pygame.Surface((1280, 720))
-    overlay.set_alpha(128)  # 0 is fully transparent, 255 is fully opaque
+    overlay.set_alpha(128)  # 0 : transparent, 255 : opaque
     overlay.fill((255, 255, 255))  # White tint
 
     while True:
-        for event in pygame.event.get():
+        for event in pygame.event.get(): # Event loop
             if quit_button.is_clicked(event) or event.type == pygame.QUIT:
                 return "MAIN_MENU"  # Change game state to MAIN MENU
             if resume_button.is_clicked(event) or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
@@ -119,9 +119,9 @@ def pause_menu(screen, clock) -> str:
         else:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
-        # Draw the captured game screen first
+        # Draw the captured screenshot
         screen.blit(background, (0, 0))
-        # Draw the semi-transparent overlay
+        # Draw the transparent overlay
         screen.blit(overlay, (0, 0))
 
         # Render paused text

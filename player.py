@@ -11,7 +11,7 @@ class Player(pygame.sprite.Sprite):
 
         # Movement and positioning
         self.pos = pygame.math.Vector2(640, 360)  # Start in the center of the screen
-        self.rect = self.image.get_rect(center=self.pos)
+        self.rect = self.image.get_frect(center=self.pos)
         self.speed: int = 300
         self.velocity = pygame.math.Vector2(0, 0)
 
