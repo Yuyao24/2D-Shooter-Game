@@ -1,17 +1,32 @@
+from typing import Any
+
 import pygame
+import random
+
+from pygame.sprite import Group, Sprite
+
 from sound_system import *
 from player import *
 from menus import *
+from map import *
 
 def gameplay_loop(screen, clock) -> str:
 
-    # Create player
-    player = pygame.sprite.GroupSingle()
-    player.add(Player())
-
     paused: bool = False
-    upgrading = False
-    game_over = False
+
+    # Sprite groups
+    all_sprites = pygame.sprite.Group()
+    collision_sprites = pygame.sprite.Group()
+
+    for i in range(5):
+        x, y = random.randint(0, 1280), random.randint(0, 720)
+        width, height = random.randint(50, 150), random.randint(50, 150)
+        CollisionSprite((x, y), (width, height), (all_sprites, collision_sprites))
+
+
+    # Create player
+    player = Player((640, 360), all_sprites, collision_sprites)
+    all_sprites.add(player)
 
     while True:
         dt = clock.tick(60) / 1000  # Delta time in seconds
@@ -32,16 +47,12 @@ def gameplay_loop(screen, clock) -> str:
             elif next_state == "QUIT":
                 return next_state # Return to game class to call quit()
 
-        if upgrading:
-            pass
-
-        if game_over:
-            pass
-
         screen.fill((0, 0, 0))  # Clear screen with black
 
-        player.update(dt)
-        player.draw(screen)
+        # Draw and update sprites
+        all_sprites.draw(screen)
+        all_sprites.update(dt)
+
 
         pygame.display.flip()  # Update the display
 

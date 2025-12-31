@@ -4,16 +4,19 @@ import pygame
 from sound_system import play_sound
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, position: tuple[int, int], groups, collision_sprites) -> None:
+        super().__init__(groups)
         # Load player image
-        self.image = pygame.image.load(os.path.join("assets", "player", "down", "0.png")).convert_alpha()
+        self.image = pygame.image.load(os.path.join("assets", "images", "player", "down", "0.png")).convert_alpha()
+        self.rect = self.image.get_frect(center=position)
 
-        # Movement and positioning
-        self.pos = pygame.math.Vector2(640, 360)  # Start in the center of the screen
-        self.rect = self.image.get_frect(center=self.pos)
+        # Movement attributes
         self.speed: int = 300
-        self.velocity = pygame.math.Vector2(0, 0)
+        self.direction = pygame.math.Vector2(0, 0)
+
+        # Sprite groups
+        self.collision_sprites = collision_sprites
+
 
     def update(self, dt) -> None:
         self.handle_movement(dt)
@@ -21,14 +24,32 @@ class Player(pygame.sprite.Sprite):
     def handle_movement(self, dt) -> None:
         keys = pygame.key.get_pressed() # Get keys pressed
 
-        # Use boolean subtraction to get direction (-1, 0, or 1)
-        self.velocity.x = keys[pygame.K_d] - keys[pygame.K_a] # Right - Left
-        self.velocity.y = keys[pygame.K_s] - keys[pygame.K_w] # Down - Up
+        # Calculate direction
+        self.direction.x = keys[pygame.K_d] - keys[pygame.K_a] # RIGHT - LEFT (Right is positive)
+        self.direction.y = keys[pygame.K_s] - keys[pygame.K_w] # DOWN - UP (Down is positive)
 
         # Normalize velocity to prevent faster diagonal movement
-        if self.velocity.length() > 0:
-            self.velocity = self.velocity.normalize()
+        if self.direction.length() > 0:
+            self.direction = self.direction.normalize()
 
         # Update position using delta time
-        self.pos += self.velocity * self.speed * dt
-        self.rect.center = self.pos
+        self.rect.x += self.direction.x * self.speed * dt
+        self.collide("horizontal")
+        self.rect.y += self.direction.y * self.speed * dt
+        self.collide("vertical")
+
+    def collide(self, direction) -> None:
+        for sprite in self.collision_sprites:
+            if sprite.rect.colliderect(self.rect):
+                if direction == "horizontal":
+                    if self.direction.x > 0:
+                        self.rect.right = sprite.rect.left
+                    if self.direction.x < 0:
+                        self.rect.left = sprite.rect.right
+                if direction == "vertical":
+                    if self.direction.y < 0:
+                        self.rect.top = sprite.rect.bottom
+                    if self.direction.y > 0:
+                        self.rect.bottom = sprite.rect.top
+
+

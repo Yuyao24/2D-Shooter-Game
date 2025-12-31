@@ -4,7 +4,7 @@ pygame.mixer.init() # Initialize Pygame mixer
 
 # Preload sound effects
 sound_effects: dict = {
-    "button_click": pygame.mixer.Sound("audio/button_click.wav"),
+    "button_click": pygame.mixer.Sound("assets/audio/button_click.wav"),
     }
 
 def play_sound(sound_name: str, volume: float) -> None:
