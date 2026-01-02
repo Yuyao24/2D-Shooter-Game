@@ -1,14 +1,10 @@
-from typing import Any
-
 import pygame
 import random
-
-from pygame.sprite import Group, Sprite
-
 from sound_system import *
 from player import *
 from menus import *
 from map import *
+from settings import *
 
 def gameplay_loop(screen, clock) -> str:
 
@@ -18,15 +14,14 @@ def gameplay_loop(screen, clock) -> str:
     all_sprites = pygame.sprite.Group()
     collision_sprites = pygame.sprite.Group()
 
+    # Create some collision sprites for testing
     for i in range(5):
-        x, y = random.randint(0, 1280), random.randint(0, 720)
+        x, y = random.randint(0, WINDOW_WIDTH), random.randint(0, WINDOW_HEIGHT)
         width, height = random.randint(50, 150), random.randint(50, 150)
         CollisionSprite((x, y), (width, height), (all_sprites, collision_sprites))
 
-
     # Create player
     player = Player((640, 360), all_sprites, collision_sprites)
-    all_sprites.add(player)
 
     while True:
         dt = clock.tick(60) / 1000  # Delta time in seconds

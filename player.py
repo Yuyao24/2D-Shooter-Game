@@ -1,14 +1,13 @@
-import os
-
 import pygame
-from sound_system import play_sound
+from sound_system import *
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, position: tuple[int, int], groups, collision_sprites) -> None:
         super().__init__(groups)
         # Load player image
-        self.image = pygame.image.load(os.path.join("assets", "images", "player", "down", "0.png")).convert_alpha()
+        self.image = pygame.image.load("assets/images/player/down/0.png").convert_alpha()
         self.rect = self.image.get_frect(center=position)
+        self.hitbox = self.rect.inflate(-60, 0)
 
         # Movement attributes
         self.speed: int = 300
@@ -16,7 +15,6 @@ class Player(pygame.sprite.Sprite):
 
         # Sprite groups
         self.collision_sprites = collision_sprites
-
 
     def update(self, dt) -> None:
         self.handle_movement(dt)
@@ -33,23 +31,20 @@ class Player(pygame.sprite.Sprite):
             self.direction = self.direction.normalize()
 
         # Update position using delta time
-        self.rect.x += self.direction.x * self.speed * dt
+        self.hitbox.x += self.direction.x * self.speed * dt
         self.collide("horizontal")
-        self.rect.y += self.direction.y * self.speed * dt
+        self.hitbox.y += self.direction.y * self.speed * dt
         self.collide("vertical")
+        self.rect.center = self.hitbox.center
 
     def collide(self, direction) -> None:
-        for sprite in self.collision_sprites:
-            if sprite.rect.colliderect(self.rect):
+        for obstacle in self.collision_sprites:
+            if obstacle.rect.colliderect(self.hitbox):
                 if direction == "horizontal":
-                    if self.direction.x > 0:
-                        self.rect.right = sprite.rect.left
-                    if self.direction.x < 0:
-                        self.rect.left = sprite.rect.right
+                    if self.direction.x > 0: self.hitbox.right = obstacle.rect.left
+                    if self.direction.x < 0: self.hitbox.left = obstacle.rect.right
                 if direction == "vertical":
-                    if self.direction.y < 0:
-                        self.rect.top = sprite.rect.bottom
-                    if self.direction.y > 0:
-                        self.rect.bottom = sprite.rect.top
+                    if self.direction.y < 0: self.hitbox.top = obstacle.rect.bottom
+                    if self.direction.y > 0: self.hitbox.bottom = obstacle.rect.top
 
 

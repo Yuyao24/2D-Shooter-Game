@@ -1,6 +1,7 @@
 import pygame
 import sys
 import time
+from settings import *
 from menus import *
 from gameplay import *
 from player import *
@@ -9,12 +10,15 @@ class Game:
     def __init__(self):
         pygame.init() # Initialize Pygame
         pygame.display.set_caption("Shooter Game") # Set window title
-        self.screen = pygame.display.set_mode((1280, 720))  # 16:9 aspect ratio
+        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))  # 16:9 aspect ratio
         self.clock = pygame.time.Clock() # Set up clock timer
 
         self.running: bool = True # Game loop flag
-        self.game_state: str = "MAIN_MENU"  # Initial game state
+        self.game_state: str = "PLAYING"  # Initial game state
                                             # Possible states: MAIN_MENU, PLAYING, PAUSED, UPGRADING, GAME_OVER
+        print("\n" + "-" * 36, "\n")
+        print("CHANGE GAME STATE TO MAIN MENU LATER")
+        print("\n" + "-" * 36 , "\n")
 
     def run(self) -> None:
         while self.running: # Main game loop
