@@ -1,11 +1,14 @@
 import pygame
-from pytmx import load_pygame
+
+class Sprite(pygame.sprite.Sprite):
+    def __init__(self, position: tuple[int, int], surf, groups) -> None:
+        super().__init__(groups)
+        self.image = surf
+        self.rect = surf.get_frect(topleft=position)
 
 class CollisionSprite(pygame.sprite.Sprite):
-    def __init__(self, position: tuple[int, int], size: tuple[int, int], groups) -> None:
+    def __init__(self, position: tuple[int, int], surf, groups) -> None:
         super().__init__(groups)
-        self.image = pygame.Surface(size)
-        self.image.fill("Red")
-        self.rect = self.image.get_frect(center=position)
+        self.image = surf
+        self.rect = surf.get_frect(topleft=position)
 
-tmx_data = load_pygame("assets/map/world.tmx")

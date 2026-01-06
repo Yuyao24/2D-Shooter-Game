@@ -1,5 +1,7 @@
 import pygame
 import random
+from pytmx import load_pygame
+
 from sound_system import *
 from player import *
 from menus import *
@@ -14,11 +16,15 @@ def gameplay_loop(screen, clock) -> str:
     all_sprites = pygame.sprite.Group()
     collision_sprites = pygame.sprite.Group()
 
-    # Create some collision sprites for testing
-    for i in range(5):
-        x, y = random.randint(0, WINDOW_WIDTH), random.randint(0, WINDOW_HEIGHT)
-        width, height = random.randint(50, 150), random.randint(50, 150)
-        CollisionSprite((x, y), (width, height), (all_sprites, collision_sprites))
+    # Map
+    map_tmx = load_pygame("assets/map/world.tmx")
+    for x, y, image in map_tmx.get_layer_by_name("Ground").tiles():
+        Sprite((x * 64, y * 64), image, (all_sprites,))
+    for obj in map_tmx.get_layer_by_name("Objects"):
+        CollisionSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
+    for obj in map_tmx.get_layer_by_name("Collisions"):
+        CollisionSprite((obj.x, obj.y), pygame.Surface((obj.width, obj.height)), (collision_sprites,))
+
 
     # Create player
     player = Player((640, 360), all_sprites, collision_sprites)
