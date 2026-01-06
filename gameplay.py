@@ -18,12 +18,15 @@ def gameplay_loop(screen, clock) -> str:
 
     # Map
     map_tmx = load_pygame("assets/map/world.tmx")
-    for x, y, image in map_tmx.get_layer_by_name("Ground").tiles():
-        Sprite((x * 64, y * 64), image, (all_sprites,))
-    for obj in map_tmx.get_layer_by_name("Objects"):
+    for x, y, image in map_tmx.get_layer_by_name("Ground").tiles(): # Create tiles
+        Sprite((x * TILE_SIZE, y * TILE_SIZE), image, (all_sprites,))
+
+    for obj in map_tmx.get_layer_by_name("Objects"): # Create collision sprites
         CollisionSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
-    for obj in map_tmx.get_layer_by_name("Collisions"):
-        CollisionSprite((obj.x, obj.y), pygame.Surface((obj.width, obj.height)), (collision_sprites,))
+
+    for obj in map_tmx.get_layer_by_name("Collisions"): # Create collision sprites
+        surf = pygame.Surface((obj.width, obj.height))
+        CollisionSprite((obj.x, obj.y), surf, (collision_sprites,))
 
 
     # Create player
