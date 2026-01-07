@@ -13,7 +13,7 @@ def gameplay_loop(screen, clock) -> str:
     paused: bool = False
 
     # Sprite groups
-    all_sprites = pygame.sprite.Group()
+    all_sprites = AllSprites()
     collision_sprites = pygame.sprite.Group()
 
     # Map
@@ -24,13 +24,18 @@ def gameplay_loop(screen, clock) -> str:
     for obj in map_tmx.get_layer_by_name("Objects"): # Create collision sprites
         CollisionSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
 
-    for obj in map_tmx.get_layer_by_name("Collisions"): # Create collision sprites
-        surf = pygame.Surface((obj.width, obj.height))
-        CollisionSprite((obj.x, obj.y), surf, (collision_sprites,))
+    player_spawn_points = []
+    for obj in map_tmx.get_layer_by_name("Entities"):
+        if obj.name == "Player":
+            player_spawn_points.append(obj)
 
+    # for obj in map_tmx.get_layer_by_name("Collisions"): # Create collision sprites
+    #     surf = pygame.Surface((obj.width, obj.height))
+    #     CollisionSprite((obj.x, obj.y), surf, (collision_sprites,))
 
-    # Create player
-    player = Player((640, 360), all_sprites, collision_sprites)
+    #Create player
+    spawn_point = random.choice(player_spawn_points)
+    player = Player((spawn_point.x, spawn_point.y), all_sprites, collision_sprites)
 
     while True:
         dt = clock.tick(60) / 1000  # Delta time in seconds
@@ -54,7 +59,7 @@ def gameplay_loop(screen, clock) -> str:
         screen.fill((0, 0, 0))  # Clear screen with black
 
         # Draw and update sprites
-        all_sprites.draw(screen)
+        all_sprites.draw_with_offset(player.rect.center)
         all_sprites.update(dt)
 
 
