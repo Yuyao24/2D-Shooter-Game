@@ -106,7 +106,7 @@
 15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,121,132,132,132,132,132,132,132,132,132,132,132,132,132,132,132,132,132,132,132
 </data>
  </layer>
- <objectgroup id="4" name="Entities">
+ <objectgroup id="4" name="Entities" locked="1">
   <object id="1386" name="Player" x="4527.52" y="1356.36">
    <point/>
   </object>
@@ -116,7 +116,7 @@
   <object id="1388" name="Player" x="1142.42" y="5139.39">
    <point/>
   </object>
-  <object id="1389" name="Player" x="3532" y="5636">
+  <object id="1389" name="Player" x="3601.7" y="5593.58">
    <point/>
   </object>
   <object id="1390" name="Player" x="5576" y="4228">
@@ -156,7 +156,7 @@
    <point/>
   </object>
  </objectgroup>
- <objectgroup id="2" name="Collisions" visible="0" locked="1">
+ <objectgroup id="2" name="Collisions" locked="1">
   <object id="790" x="265.333" y="650.667" width="114.667" height="50.6667"/>
   <object id="791" x="322.667" y="576" width="186.667" height="58.6667"/>
   <object id="792" x="449.333" y="510.667" width="252" height="64"/>
@@ -734,7 +734,7 @@
   <object id="859" gid="211" x="2838" y="5650" width="60" height="60"/>
   <object id="860" gid="212" x="2798" y="5736" width="56" height="60"/>
  </objectgroup>
- <objectgroup id="5" name="Trees" visible="0" locked="1">
+ <objectgroup id="5" name="Trees" locked="1">
   <object id="868" gid="213" x="3842.67" y="2654.67" width="128" height="192"/>
   <object id="869" gid="213" x="2362.67" y="2285.33" width="128" height="192"/>
   <object id="870" gid="213" x="2321.33" y="2389.33" width="128" height="192"/>

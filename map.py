@@ -1,6 +1,6 @@
 import pygame
 
-class Sprite(pygame.sprite.Sprite):
+class GroundTile(pygame.sprite.Sprite):
     def __init__(self, position: tuple[int, int], surf, groups) -> None:
         super().__init__(groups)
         self.image = surf
