@@ -9,7 +9,7 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_frect(center=position)
         self.hitbox = self.rect.inflate(-60, -90)
         self.hitbox.midbottom = self.rect.midbottom
-
+        self.z_layer = 1
 
         # Movement attributes
         self.speed: int = 300

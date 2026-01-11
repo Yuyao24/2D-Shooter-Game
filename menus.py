@@ -104,7 +104,7 @@ def pause_menu(screen, clock) -> str:
     # Create a transparent overlay
     overlay = pygame.Surface((1280, 720))
     overlay.set_alpha(128)  # 0 : transparent, 255 : opaque
-    overlay.fill((255, 255, 255))  # White tint
+    overlay.fill((0, 0, 0))  # Black tint
 
     while True:
         for event in pygame.event.get(): # Event loop
