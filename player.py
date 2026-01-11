@@ -7,7 +7,9 @@ class Player(pygame.sprite.Sprite):
         # Load player image
         self.image = pygame.image.load("assets/images/player/down/0.png").convert_alpha()
         self.rect = self.image.get_frect(center=position)
-        self.hitbox = self.rect.inflate(-60, 0)
+        self.hitbox = self.rect.inflate(-60, -90)
+        self.hitbox.midbottom = self.rect.midbottom
+
 
         # Movement attributes
         self.speed: int = 300
@@ -35,16 +37,17 @@ class Player(pygame.sprite.Sprite):
         self.collide("horizontal")
         self.hitbox.y += self.direction.y * self.speed * dt
         self.collide("vertical")
-        self.rect.center = self.hitbox.center
+        self.rect.midbottom = self.hitbox.midbottom
 
     def collide(self, direction) -> None:
         for obstacle in self.collision_sprites:
-            if obstacle.rect.colliderect(self.hitbox):
+            if obstacle.hitbox.colliderect(self.hitbox):
                 if direction == "horizontal":
-                    if self.direction.x > 0: self.hitbox.right = obstacle.rect.left
-                    if self.direction.x < 0: self.hitbox.left = obstacle.rect.right
+                    if self.direction.x > 0: self.hitbox.right = obstacle.hitbox.left
+                    if self.direction.x < 0: self.hitbox.left = obstacle.hitbox.right
+                ...
                 if direction == "vertical":
-                    if self.direction.y < 0: self.hitbox.top = obstacle.rect.bottom
-                    if self.direction.y > 0: self.hitbox.bottom = obstacle.rect.top
+                    if self.direction.y < 0: self.hitbox.top = obstacle.hitbox.bottom
+                    if self.direction.y > 0: self.hitbox.bottom = obstacle.hitbox.top
 
 

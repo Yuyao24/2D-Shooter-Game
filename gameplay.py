@@ -21,17 +21,17 @@ def gameplay_loop(screen, clock) -> str:
     for x, y, image in map_tmx.get_layer_by_name("Ground").tiles(): # Create tiles
         GroundTile((x * TILE_SIZE, y * TILE_SIZE), image, (all_sprites,))
 
-    for obj in map_tmx.get_layer_by_name("Objects"): # Create collision sprites
-        CollisionSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
+    for obj in map_tmx.get_layer_by_name("Rocks"): # Create collision sprites
+        SmallSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
 
+    for obj in map_tmx.get_layer_by_name("Objects"): # Create collision sprites
+        TallSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
+
+    # Get player spawn points
     player_spawn_points = []
     for obj in map_tmx.get_layer_by_name("Entities"):
         if obj.name == "Player":
             player_spawn_points.append(obj)
-
-    # for obj in map_tmx.get_layer_by_name("Collisions"): # Create collision sprites
-    #     surf = pygame.Surface((obj.width, obj.height))
-    #     CollisionSprite((obj.x, obj.y), surf, (collision_sprites,))
 
     #Create player
     spawn_point = random.choice(player_spawn_points)
