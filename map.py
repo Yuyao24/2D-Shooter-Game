@@ -25,3 +25,8 @@ class TallSprite(pygame.sprite.Sprite):
         self.hitbox.midbottom = self.rect.midbottom
         self.z_layer = 1
 
+class RectSprite(pygame.sprite.Sprite):
+    def __init__(self, position: tuple[int, int], surf, groups) -> None:
+        super().__init__(groups)
+        self.image = surf
+        self.rect = surf.get_frect(topleft=position)
