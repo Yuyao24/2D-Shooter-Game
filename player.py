@@ -45,7 +45,6 @@ class Player(pygame.sprite.Sprite):
                 if direction == "horizontal":
                     if self.direction.x > 0: self.hitbox.right = obstacle.hitbox.left
                     if self.direction.x < 0: self.hitbox.left = obstacle.hitbox.right
-                ...
                 if direction == "vertical":
                     if self.direction.y < 0: self.hitbox.top = obstacle.hitbox.bottom
                     if self.direction.y > 0: self.hitbox.bottom = obstacle.hitbox.top
