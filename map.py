@@ -30,3 +30,5 @@ class RectSprite(pygame.sprite.Sprite):
         super().__init__(groups)
         self.image = surf
         self.rect = surf.get_frect(topleft=position)
+        self.hitbox = self.rect
+        self.z_layer = -1 # Invisible, underneath everything

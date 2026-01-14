@@ -27,6 +27,10 @@ def gameplay_loop(screen, clock) -> str:
     for obj in map_tmx.get_layer_by_name("Objects"): # Create collision sprites
         TallSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
 
+    for obj in map_tmx.get_layer_by_name("Collisions"): # Create collision boxes
+        RectSprite((obj.x, obj.y), pygame.Surface((obj.width, obj.height), pygame.SRCALPHA),
+                   (all_sprites, collision_sprites))
+
     # Get player spawn points
     player_spawn_points = []
     for obj in map_tmx.get_layer_by_name("Entities"):

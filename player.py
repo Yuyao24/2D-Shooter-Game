@@ -40,7 +40,13 @@ class Player(pygame.sprite.Sprite):
         self.rect.midbottom = self.hitbox.midbottom
 
     def collide(self, direction) -> None:
-        for obstacle in self.collision_sprites:
+        colliders = pygame.sprite.spritecollide(
+            self,
+            self.collision_sprites,
+            False,
+            lambda spr, obs: spr.hitbox.colliderect(obs.hitbox))
+
+        for obstacle in colliders:
             if obstacle.hitbox.colliderect(self.hitbox):
                 if direction == "horizontal":
                     if self.direction.x > 0: self.hitbox.right = obstacle.hitbox.left
