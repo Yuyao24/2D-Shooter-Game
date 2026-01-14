@@ -4,7 +4,7 @@ from sound_system import *
 class Player(pygame.sprite.Sprite):
     def __init__(self, position: tuple[int, int], groups, collision_sprites) -> None:
         super().__init__(groups)
-        # Load player image
+        # Player image
         self.image = pygame.image.load("assets/images/player/down/0.png").convert_alpha()
         self.rect = self.image.get_frect(center=position)
         self.hitbox = self.rect.inflate(-60, -90)
