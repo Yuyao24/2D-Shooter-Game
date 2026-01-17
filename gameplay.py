@@ -1,11 +1,8 @@
-import pygame
-import random
 from pytmx import load_pygame
-
-from sound_system import *
 from player import *
 from menus import *
 from map import *
+from enemy import *
 from settings import *
 
 def gameplay_loop(screen, clock) -> str:
@@ -30,16 +27,14 @@ def gameplay_loop(screen, clock) -> str:
                    (all_sprites, collision_sprites))
 
     # Get player spawn points
-    player_spawn_points = []
-    for obj in map_tmx.get_layer_by_name("Entities"):
-        if obj.name == "Player":
-            player_spawn_points.append(obj)
+    player_spawn_points = [obj for obj in map_tmx.get_layer_by_name("Entities") if obj.name == "Player"]
 
+    # Create pathfinder
     pathfinder = Pathfinder(map_tmx.width, map_tmx.height, collision_sprites)
 
     #Create player
-    spawn_point = random.choice(player_spawn_points)
-    player = Player((spawn_point.x, spawn_point.y), all_sprites, collision_sprites)
+    player_spawn = random.choice(player_spawn_points)
+    player = Player((player_spawn.x, player_spawn.y), all_sprites, collision_sprites)
 
     while True:
         dt = clock.tick(60) / 1000  # Delta time in seconds
@@ -73,6 +68,13 @@ def gameplay_loop(screen, clock) -> str:
         all_sprites.draw_with_offset(player.rect.center)
         all_sprites.update(dt)
 
+        mouse_pos = pygame.mouse.get_pos() + all_sprites.offset
+        test_path = pathfinder.get_path(mouse_pos, player.rect.center)
+
+        if len(test_path) > 1: # More than 2 nodes in the path
+            # Subtract the offset so the lines move with the camera
+            points = [node - all_sprites.offset for node in test_path]
+            pygame.draw.lines(screen, "red", False, points, 5)
 
         pygame.display.flip()  # Update the display
 

@@ -1,13 +1,9 @@
-import pygame
-import sys
-import time
-from settings import *
-from menus import *
+import sys, time
 from gameplay import *
 from player import *
 
 class Game:
-    def __init__(self):
+    def __init__(self) -> None:
         pygame.init() # Initialize Pygame
         pygame.display.set_caption("Shooter Game") # Set window title
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))  # 16:9 aspect ratio
