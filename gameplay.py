@@ -68,8 +68,5 @@ def gameplay_loop(screen, clock) -> str:
         all_sprites.draw_with_offset(player.rect.center)
         all_sprites.update(dt)
 
-        mouse_pos = pygame.mouse.get_pos() + all_sprites.offset
-        test_path = pathfinder.get_path(mouse_pos, player.rect.center)
-
         pygame.display.flip()  # Update the display
 
