@@ -1,4 +1,5 @@
 import pygame, random
+from settings import *
 
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, position, groups, collision_sprites, player, pathfinder):
@@ -17,72 +18,76 @@ class Enemy(pygame.sprite.Sprite):
         # AI & Pathfinding
         self.player = player
         self.target = self.player
+
+        self.active = False
         self.pathfinder = pathfinder
+
         self.path = []
         self.direction = pygame.math.Vector2()
         self.speed = random.randint(160, 200)
-        self.active = False
+
         self.path_timer = pygame.time.get_ticks() + random.randint(0, 500)
-        self.last_player_tile = None
+        self.last_target_tile = None
 
     def update(self, dt):
         if self.active:
-            self.handle_ai()
+            self.pathfind()
             self.handle_movement(dt)
         else:
             self.check_active()
 
     def check_active(self):
-        enemy_vec = pygame.math.Vector2(self.rect.center)
-        target_vec = pygame.math.Vector2(self.target.rect.center)
-        if (target_vec - enemy_vec).length() < 600:
+        enemy_pos = pygame.math.Vector2(self.rect.center)
+        target_pos = pygame.math.Vector2(self.target.rect.center)
+        if (target_pos - enemy_pos).length() < 500:
             self.active = True
 
-    def handle_ai(self):
+    def pathfind(self):
         current_time = pygame.time.get_ticks()
         if current_time < self.path_timer:
             return
 
-        target_vec = pygame.math.Vector2(self.target.hitbox.center)
-        target_tile = (int(target_vec.x // 64), int(target_vec.y // 64))
+        target_pos = pygame.math.Vector2(self.target.hitbox.center)
 
-        if target_tile != self.last_player_tile:
-            self.path = self.pathfinder.get_path(self.hitbox.center, target_vec)
+        random_offset = pygame.math.Vector2(random.randint(-64, 64), random.randint(-64, 64))
+        target_pos = target_pos + random_offset
+
+        target_tile = (int(target_pos.x // TILE_SIZE), int(target_pos.y // TILE_SIZE))
+
+        if target_tile != self.last_target_tile:
+            self.path = self.pathfinder.get_path(self.hitbox.center, target_pos)
             if self.path:
                 self.path.pop(0)
 
-            self.last_player_tile = target_tile
+            self.last_target_tile = target_tile
 
         self.path_timer = current_time + 500 + random.randint(-100, 100)
 
     def handle_movement(self, dt):
-        enemy_vec = pygame.math.Vector2(self.hitbox.center)
-        target_vec = pygame.math.Vector2(self.target.hitbox.center)
+        enemy_pos = pygame.math.Vector2(self.hitbox.center)
+        target_pos = pygame.math.Vector2(self.target.hitbox.center)
 
-        if (target_vec - enemy_vec).length() < 40:
+        if (target_pos - enemy_pos).length() < 64:
             self.direction = pygame.math.Vector2()
             return
 
         if self.path:
             target = self.path[0]
-            self.direction = (target - enemy_vec)
+            self.direction = (target - enemy_pos)
 
-            if self.direction.length() > 5:  # Slightly larger threshold to prevent oscillation
+            if self.direction.length() > 5:  # Larger threshold
                 self.direction = self.direction.normalize()
 
-                # Horizontal movement and collision
+                # Move towards target
                 self.hitbox.x += self.direction.x * self.speed * dt
                 self.collide("horizontal")
-
-                # Vertical movement and collision
                 self.hitbox.y += self.direction.y * self.speed * dt
                 self.collide("vertical")
 
-                # Crucial: Sync rect to hitbox midbottom, then sync hitbox back to rect if needed
-                # This prevents the image and the physics from drifting
+                # Sync position with hitbox
                 self.rect.midbottom = self.hitbox.midbottom
             else:
-                # Snap to target center when very close to ensure alignment for the next node
+                # Snap to target when very close
                 self.hitbox.center = target
                 self.rect.midbottom = self.hitbox.midbottom
                 self.path.pop(0)

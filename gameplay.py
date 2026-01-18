@@ -50,7 +50,7 @@ def gameplay_loop(screen, clock) -> str:
                 if event.button == 1:
                     mouse_pos = pygame.mouse.get_pos()
                     world_pos = mouse_pos + all_sprites.offset
-                    # Add to both all_sprites (drawing) and enemy_sprites (counting)
+                    # Spawn enemy at mouse position
                     Enemy(world_pos, (all_sprites, enemy_sprites), collision_sprites, player, pathfinder)
 
         if paused: # Check if paused
@@ -70,11 +70,6 @@ def gameplay_loop(screen, clock) -> str:
 
         mouse_pos = pygame.mouse.get_pos() + all_sprites.offset
         test_path = pathfinder.get_path(mouse_pos, player.rect.center)
-
-        if len(test_path) > 1: # More than 2 nodes in the path
-            # Subtract the offset so the lines move with the camera
-            points = [node - all_sprites.offset for node in test_path]
-            pygame.draw.lines(screen, "red", False, points, 5)
 
         pygame.display.flip()  # Update the display
 
