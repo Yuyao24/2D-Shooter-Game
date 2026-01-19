@@ -32,9 +32,19 @@ def gameplay_loop(screen, clock) -> str:
     # Create pathfinder
     pathfinder = Pathfinder(map_tmx.width, map_tmx.height, collision_sprites)
 
-    #Create player
+    # Create player
     player_spawn = random.choice(player_spawn_points)
     player = Player((player_spawn.x, player_spawn.y), all_sprites, collision_sprites)
+
+    # Create enemies at points where the player is not spawned
+    enemy_spawn_points = [obj for obj in player_spawn_points if obj != player_spawn]
+    for spawn_point in enemy_spawn_points:
+        for i in range(random.randint(3, 5)): # Spawn 3-5 enemies per point
+            # Random offset to avoid stacking
+            offset_x = random.randint(-100, 100)
+            offset_y = random.randint(-100, 100)
+            
+            Enemy((spawn_point.x + offset_x, spawn_point.y + offset_y), (all_sprites, enemy_sprites), collision_sprites, player, pathfinder)
 
     while True:
         dt = clock.tick(60) / 1000  # Delta time in seconds
@@ -45,13 +55,6 @@ def gameplay_loop(screen, clock) -> str:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     paused = True
-
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:
-                    mouse_pos = pygame.mouse.get_pos()
-                    world_pos = mouse_pos + all_sprites.offset
-                    # Spawn enemy at mouse position
-                    Enemy(world_pos, (all_sprites, enemy_sprites), collision_sprites, player, pathfinder)
 
         if paused: # Check if paused
             next_state = pause_menu(screen, clock)
