@@ -2,7 +2,7 @@ import pygame, random
 from settings import *
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, position, groups, collision_sprites, player, pathfinder):
+    def __init__(self, position, groups, collision_sprites, player, pathfinder, bullets):
         super().__init__(groups)
         # Enemy image
         self.image = pygame.image.load('assets/images/enemy/enemy.png').convert_alpha()
@@ -12,8 +12,11 @@ class Enemy(pygame.sprite.Sprite):
         self.hitbox.midbottom = self.rect.midbottom
         self.z_layer = 1
 
+        self.offset = groups[0].offset
+
         # Sprite groups
         self.collision_sprites = collision_sprites
+        self.bullets = bullets
 
         # AI & Pathfinding
         self.player = player
@@ -29,12 +32,16 @@ class Enemy(pygame.sprite.Sprite):
         self.path_timer = pygame.time.get_ticks() + random.randint(0, 500)
         self.last_target_tile = None
 
+        self.health = 100
+
     def update(self, dt):
         if self.active:
             self.pathfind()
             self.handle_movement(dt)
         else:
             self.check_active()
+
+        self.check_hit()
 
     def check_active(self):
         enemy_pos = pygame.math.Vector2(self.rect.center)
@@ -101,3 +108,15 @@ class Enemy(pygame.sprite.Sprite):
                 if direction == "vertical":
                     if self.direction.y < 0: self.hitbox.top = obstacle.hitbox.bottom
                     if self.direction.y > 0: self.hitbox.bottom = obstacle.hitbox.top
+
+    def check_hit(self):
+        for bullet in self.bullets:
+            if self.rect.colliderect(bullet.rect):
+                self.take_damage(50)
+                bullet.kill()
+
+    def take_damage(self, amount):
+        self.health -= amount
+        if self.health <= 0:
+            self.kill()
+        

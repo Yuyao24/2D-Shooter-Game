@@ -13,15 +13,19 @@ def gameplay_loop(screen, clock) -> str:
     all_sprites = AllSprites()
     collision_sprites = pygame.sprite.Group()
     enemy_sprites = pygame.sprite.Group()
+    bullets = pygame.sprite.Group()
 
     # Map
     map_tmx = load_pygame("assets/map/world.tmx")
     for x, y, image in map_tmx.get_layer_by_name("Ground").tiles(): # Create tiles
         GroundTile((x * TILE_SIZE, y * TILE_SIZE), image, (all_sprites,))
+
     for obj in map_tmx.get_layer_by_name("Rocks"): # Create collision sprites
         SmallSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
+
     for obj in map_tmx.get_layer_by_name("Objects"): # Create collision sprites
         TallSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
+
     for obj in map_tmx.get_layer_by_name("Collisions"): # Create collision boxes
         RectSprite((obj.x, obj.y), pygame.Surface((obj.width, obj.height), pygame.SRCALPHA),
                    (all_sprites, collision_sprites))
@@ -43,8 +47,8 @@ def gameplay_loop(screen, clock) -> str:
             # Random offset to avoid stacking
             offset_x = random.randint(-100, 100)
             offset_y = random.randint(-100, 100)
-            
-            Enemy((spawn_point.x + offset_x, spawn_point.y + offset_y), (all_sprites, enemy_sprites), collision_sprites, player, pathfinder)
+
+            Enemy((spawn_point.x + offset_x, spawn_point.y + offset_y), (all_sprites, enemy_sprites), collision_sprites, player, pathfinder, bullets)
 
     while True:
         dt = clock.tick(60) / 1000  # Delta time in seconds
@@ -55,6 +59,13 @@ def gameplay_loop(screen, clock) -> str:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     paused = True
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + all_sprites.offset
+                if event.button == 1:
+                    direction = mouse_pos - pygame.math.Vector2(player.rect.center)
+                    Bullet(player.rect.center, direction, (all_sprites, bullets), collision_sprites, player)
+                if event.button == 3:
+                    Enemy(mouse_pos, (all_sprites, enemy_sprites), collision_sprites, player, pathfinder, bullets)
 
         if paused: # Check if paused
             next_state = pause_menu(screen, clock)

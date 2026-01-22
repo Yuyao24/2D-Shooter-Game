@@ -49,4 +49,41 @@ class Player(pygame.sprite.Sprite):
                     if self.direction.y < 0: self.hitbox.top = obstacle.hitbox.bottom
                     if self.direction.y > 0: self.hitbox.bottom = obstacle.hitbox.top
 
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, position: tuple[int, int], direction: pygame.math.Vector2, groups, collision_sprites, player) -> None:
+        super().__init__(groups)
+        self.image = pygame.Surface((20, 20), pygame.SRCALPHA)
+        pygame.draw.circle(self.image, (255, 0, 0), (10, 10), 10)
+        self.rect = self.image.get_frect(center=position)
+        self.direction = direction.normalize()
+        self.speed = 1500
+        self.z_layer = 1
+
+        # Sprite groups
+        self.collision_sprites = collision_sprites
+        self.player = player
+
+    def update(self, dt) -> None:
+        if self.direction.length() > 0:
+            self.direction = self.direction.normalize()
+
+        player_pos = pygame.math.Vector2(self.player.rect.center)
+        bullet_pos = pygame.math.Vector2(self.rect.center)
+         # Remove bullet if too far from player
+        if (player_pos - bullet_pos).length() > 500:
+            self.kill()
+
+        self.rect.x += self.direction.x * self.speed * dt
+        self.rect.y += self.direction.y * self.speed * dt
+        self.check_collision()
+
+    def check_collision(self) -> None:
+        for obstacle in self.collision_sprites:
+            if obstacle.hitbox.colliderect(self.rect):
+                self.kill()
+
+
+
+
+        
 
