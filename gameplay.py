@@ -38,9 +38,9 @@ def gameplay_loop(screen, clock) -> str:
 
     # Create player
     player_spawn = random.choice(player_spawn_points)
-    player = Player((player_spawn.x, player_spawn.y), all_sprites, collision_sprites)
+    player = Player((player_spawn.x, player_spawn.y), (all_sprites,), collision_sprites)
 
-    # Create enemies at points where the player is not spawned
+    # Create enemies at points where the player is not spawneds
     enemy_spawn_points = [obj for obj in player_spawn_points if obj != player_spawn]
     for spawn_point in enemy_spawn_points:
         for i in range(random.randint(3, 5)): # Spawn 3-5 enemies per point
@@ -62,8 +62,7 @@ def gameplay_loop(screen, clock) -> str:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + all_sprites.offset
                 if event.button == 1:
-                    direction = mouse_pos - pygame.math.Vector2(player.rect.center)
-                    Bullet(player.rect.center, direction, (all_sprites, bullets), collision_sprites, player)
+                    player.shoot(all_sprites, bullets)
                 if event.button == 3:
                     Enemy(mouse_pos, (all_sprites, enemy_sprites), collision_sprites, player, pathfinder, bullets)
 

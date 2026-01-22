@@ -1,4 +1,4 @@
-import pygame
+import pygame, random
 from sound_system import *
 
 class Player(pygame.sprite.Sprite):
@@ -17,6 +17,7 @@ class Player(pygame.sprite.Sprite):
 
         # Sprite groups
         self.collision_sprites = collision_sprites
+        self.offset = groups[0].offset
 
     def update(self, dt) -> None:
         self.handle_movement(dt)
@@ -49,13 +50,18 @@ class Player(pygame.sprite.Sprite):
                     if self.direction.y < 0: self.hitbox.top = obstacle.hitbox.bottom
                     if self.direction.y > 0: self.hitbox.bottom = obstacle.hitbox.top
 
+    def shoot(self, all_sprites, bullets) -> None:
+        mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + all_sprites.offset
+        direction = mouse_pos - pygame.math.Vector2(self.rect.center)
+        Bullet(self.rect.center, direction, (all_sprites, bullets), self.collision_sprites, self)
+
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, position: tuple[int, int], direction: pygame.math.Vector2, groups, collision_sprites, player) -> None:
         super().__init__(groups)
         self.image = pygame.Surface((20, 20), pygame.SRCALPHA)
         pygame.draw.circle(self.image, (255, 0, 0), (10, 10), 10)
         self.rect = self.image.get_frect(center=position)
-        self.direction = direction.normalize()
+        self.direction = direction.normalize() if direction.length() > 0 else pygame.math.Vector2(0, -1)
         self.speed = 1500
         self.z_layer = 1
 
@@ -70,7 +76,7 @@ class Bullet(pygame.sprite.Sprite):
         player_pos = pygame.math.Vector2(self.player.rect.center)
         bullet_pos = pygame.math.Vector2(self.rect.center)
          # Remove bullet if too far from player
-        if (player_pos - bullet_pos).length() > 500:
+        if (player_pos - bullet_pos).length() > 600:
             self.kill()
 
         self.rect.x += self.direction.x * self.speed * dt

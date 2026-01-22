@@ -115,6 +115,16 @@ class Enemy(pygame.sprite.Sprite):
                 self.take_damage(50)
                 bullet.kill()
 
+
+                # # Use a set to track enemies already damaged by this bullet
+                # if not hasattr(bullet, "damaged_enemies"):
+                #     bullet.damaged_enemies = set()  # Initialize the set if it doesn't exist
+
+                # if self not in bullet.damaged_enemies:  # Check if this enemy has already been damaged
+                #     self.take_damage(50)
+                #     bullet.damaged_enemies.add(self)  # Mark this enemy as damaged by the bullet
+
+
     def take_damage(self, amount):
         self.health -= amount
         if self.health <= 0:
