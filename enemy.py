@@ -75,7 +75,7 @@ class Enemy(pygame.sprite.Sprite):
         enemy_pos = pygame.math.Vector2(self.hitbox.center)
         target_pos = pygame.math.Vector2(self.target.hitbox.center)
 
-        if (target_pos - enemy_pos).length() < 256:
+        if (target_pos - enemy_pos).length() < 64:
             self.direction = pygame.math.Vector2()
             return
 
