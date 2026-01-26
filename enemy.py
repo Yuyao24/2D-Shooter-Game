@@ -41,13 +41,15 @@ class Enemy(pygame.sprite.Sprite):
             self.handle_movement(dt)
         else:
             self.check_active()
-
+        
         self.check_hit()
 
     def check_active(self):
         enemy_pos = pygame.math.Vector2(self.rect.center)
         target_pos = pygame.math.Vector2(self.target.rect.center)
         if (target_pos - enemy_pos).length() < 500:
+            self.active = True
+        if self.check_hit():
             self.active = True
 
     def pathfind(self):
@@ -115,6 +117,7 @@ class Enemy(pygame.sprite.Sprite):
             if self.mask.overlap(bullet.mask, (bullet.rect.left - self.rect.left, bullet.rect.top - self.rect.top)):
                 self.take_damage(50)
                 bullet.kill()
+                return True
 
 
                 # # Use a set to track enemies already damaged by this bullet
