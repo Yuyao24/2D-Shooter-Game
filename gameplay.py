@@ -40,7 +40,7 @@ def gameplay_loop(screen, clock) -> str:
     player_spawn = random.choice(player_spawn_points)
     player = Player((player_spawn.x, player_spawn.y), (all_sprites,), collision_sprites)
 
-    # Create enemies at points where the player is not spawneds
+    # Create enemies at points where the player is not spawned
     enemy_spawn_points = [obj for obj in player_spawn_points if obj != player_spawn]
     for spawn_point in enemy_spawn_points:
         for i in range(random.randint(3, 5)): # Spawn 3-5 enemies per point

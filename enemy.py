@@ -8,6 +8,7 @@ class Enemy(pygame.sprite.Sprite):
         self.image = pygame.image.load('assets/images/enemy/enemy.png').convert_alpha()
         self.image = pygame.transform.scale(self.image, (128, 128))
         self.rect = self.image.get_frect(center=position)
+        self.mask = pygame.mask.from_surface(self.image)
         self.hitbox = self.rect.inflate(-60, -90)
         self.hitbox.midbottom = self.rect.midbottom
         self.z_layer = 1
@@ -74,7 +75,7 @@ class Enemy(pygame.sprite.Sprite):
         enemy_pos = pygame.math.Vector2(self.hitbox.center)
         target_pos = pygame.math.Vector2(self.target.hitbox.center)
 
-        if (target_pos - enemy_pos).length() < 64:
+        if (target_pos - enemy_pos).length() < 256:
             self.direction = pygame.math.Vector2()
             return
 
@@ -111,7 +112,7 @@ class Enemy(pygame.sprite.Sprite):
 
     def check_hit(self):
         for bullet in self.bullets:
-            if self.rect.colliderect(bullet.rect):
+            if self.mask.overlap(bullet.mask, (bullet.rect.left - self.rect.left, bullet.rect.top - self.rect.top)):
                 self.take_damage(50)
                 bullet.kill()
 

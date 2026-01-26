@@ -58,9 +58,10 @@ class Player(pygame.sprite.Sprite):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, position: tuple[int, int], direction: pygame.math.Vector2, groups, collision_sprites, player) -> None:
         super().__init__(groups)
-        self.image = pygame.Surface((20, 20), pygame.SRCALPHA)
-        pygame.draw.circle(self.image, (255, 0, 0), (10, 10), 10)
+        self.image = pygame.image.load("assets/images/bullet/Red-Circle-Transparent.png").convert_alpha()
+        self.image = pygame.transform.scale(self.image, (16, 16))
         self.rect = self.image.get_frect(center=position)
+        self.mask = pygame.mask.from_surface(self.image)
         self.direction = direction.normalize() if direction.length() > 0 else pygame.math.Vector2(0, -1)
         self.speed = 1500
         self.z_layer = 1
