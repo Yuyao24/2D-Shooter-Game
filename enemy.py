@@ -5,7 +5,7 @@ class Enemy(pygame.sprite.Sprite):
     def __init__(self, position, groups, collision_sprites, player, pathfinder, bullets):
         super().__init__(groups)
         # Enemy image
-        self.image = pygame.image.load('assets/images/enemy/enemy.png').convert_alpha()
+        self.image = pygame.image.load('assets/images/enemy.png').convert_alpha()
         self.image = pygame.transform.scale(self.image, (128, 128))
         self.rect = self.image.get_frect(center=position)
         self.mask = pygame.mask.from_surface(self.image)

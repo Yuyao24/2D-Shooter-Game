@@ -5,7 +5,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, position: tuple[int, int], groups, collision_sprites) -> None:
         super().__init__(groups)
         # Player image
-        self.image = pygame.image.load("assets/images/player/down/0.png").convert_alpha()
+        self.image = pygame.image.load("assets/images/player.png").convert_alpha()
         self.rect = self.image.get_frect(center=position)
         self.hitbox = self.rect.inflate(-60, -90)
         self.hitbox.midbottom = self.rect.midbottom
@@ -58,7 +58,7 @@ class Player(pygame.sprite.Sprite):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, position: tuple[int, int], direction: pygame.math.Vector2, groups, collision_sprites, player) -> None:
         super().__init__(groups)
-        self.image = pygame.image.load("assets/images/bullet/Red-Circle-Transparent.png").convert_alpha()
+        self.image = pygame.image.load("assets/images/Red-Circle-Transparent.png").convert_alpha()
         self.image = pygame.transform.scale(self.image, (16, 16))
         self.rect = self.image.get_frect(center=position)
         self.mask = pygame.mask.from_surface(self.image)
