@@ -1,5 +1,4 @@
 import pygame, random
-from sound_system import *
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, position: tuple[int, int], groups, collision_sprites) -> None:
@@ -58,17 +57,20 @@ class Player(pygame.sprite.Sprite):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, position: tuple[int, int], direction: pygame.math.Vector2, groups, collision_sprites, player) -> None:
         super().__init__(groups)
+        # Bullet image
         self.image = pygame.image.load("assets/images/Red-Circle-Transparent.png").convert_alpha()
         self.image = pygame.transform.scale(self.image, (16, 16))
         self.rect = self.image.get_frect(center=position)
         self.mask = pygame.mask.from_surface(self.image)
-        self.direction = direction.normalize() if direction.length() > 0 else pygame.math.Vector2(0, -1)
-        self.speed = 1500
         self.z_layer = 1
 
         # Sprite groups
         self.collision_sprites = collision_sprites
         self.player = player
+
+        # Movement attributes
+        self.direction = direction.normalize() if direction.length() > 0 else pygame.math.Vector2(0, -1)
+        self.speed = 1500
 
     def update(self, dt) -> None:
         if self.direction.length() > 0:
