@@ -30,25 +30,29 @@ def gameplay_loop(screen, clock) -> str:
         RectSprite((obj.x, obj.y), pygame.Surface((obj.width, obj.height), pygame.SRCALPHA),
                    (all_sprites, collision_sprites))
 
-    # Get player spawn points
+    # Get spawn points
     player_spawn_points = [obj for obj in map_tmx.get_layer_by_name("Entities") if obj.name == "Player"]
-
-    # Create pathfinder
-    pathfinder = Pathfinder(map_tmx.width, map_tmx.height, collision_sprites)
+    enemy_spawn_points = [obj for obj in map_tmx.get_layer_by_name("Entities") if obj.name == "Enemy"]
 
     # Create player
     player_spawn = random.choice(player_spawn_points)
     player = Player((player_spawn.x, player_spawn.y), (all_sprites,), collision_sprites)
 
-    # Create enemies at points where the player is not spawned
+    # Create pathfinder
+    pathfinder = Pathfinder(map_tmx.width, map_tmx.height, collision_sprites)
+
+    # Create enemies at points far enough from player
     enemy_spawn_points = [obj for obj in player_spawn_points if obj != player_spawn]
-    for spawn_point in enemy_spawn_points:
+    valid_enemy_spawns = [obj for obj in enemy_spawn_points if
+                          pygame.math.Vector2(obj.x, obj.y).distance_to(
+                              pygame.math.Vector2(player_spawn.x, player_spawn.y)) > 300]
+
+    for spawn in random.sample(valid_enemy_spawns, k=random.randint(9, 12)): # Randomly select spawn points
         for i in range(random.randint(3, 5)): # Spawn 3-5 enemies per point
-            # Random offset to avoid stacking
+            # Random offset to prevent stacking
             offset_x = random.randint(-100, 100)
             offset_y = random.randint(-100, 100)
-
-            Enemy((spawn_point.x + offset_x, spawn_point.y + offset_y), (all_sprites, enemy_sprites), collision_sprites, player, pathfinder, bullets)
+            Enemy((spawn.x + offset_x, spawn.y + offset_y), (all_sprites, enemy_sprites), collision_sprites, player, pathfinder, bullets)
 
     while True:
         dt = clock.tick(60) / 1000  # Delta time in seconds

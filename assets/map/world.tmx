@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="111" height="111" tilewidth="64" tileheight="64" infinite="0" nextlayerid="7" nextobjectid="2141">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="111" height="111" tilewidth="64" tileheight="64" infinite="0" nextlayerid="7" nextobjectid="2180">
  <tileset firstgid="1" source="world_tileset.tsx"/>
  <tileset firstgid="211" source="Objects.tsx"/>
- <layer id="1" name="Ground" width="111" height="111">
+ <layer id="1" name="Ground" width="111" height="111" locked="1">
   <data encoding="csv">
 45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,
 45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,45,
@@ -118,46 +118,46 @@
 </data>
  </layer>
  <objectgroup id="4" name="Entities">
-  <object id="1386" name="Player" x="4911.52" y="1676.36">
+  <object id="1386" name="Player" x="4911.52" y="1676.36" visible="0">
    <point/>
   </object>
-  <object id="1387" name="Player" x="1396.12" y="1410.91">
+  <object id="1387" name="Player" x="1396.12" y="1410.91" visible="0">
    <point/>
   </object>
-  <object id="1388" name="Player" x="1526.42" y="5459.39">
+  <object id="1388" name="Player" x="1526.42" y="5459.39" visible="0">
    <point/>
   </object>
-  <object id="1389" name="Player" x="3985.7" y="5913.58">
+  <object id="1389" name="Player" x="3985.7" y="5913.58" visible="0">
    <point/>
   </object>
-  <object id="1390" name="Player" x="5960" y="4548">
+  <object id="1390" name="Player" x="5960" y="4548" visible="0">
    <point/>
   </object>
-  <object id="1391" name="Player" x="5636" y="5636">
+  <object id="1391" name="Player" x="5636" y="5636" visible="0">
    <point/>
   </object>
-  <object id="1393" name="Player" x="5316" y="2900">
+  <object id="1393" name="Player" x="5316" y="2900" visible="0">
    <point/>
   </object>
-  <object id="1394" name="Player" x="3660" y="2044">
+  <object id="1394" name="Player" x="3660" y="2044" visible="0">
    <point/>
   </object>
-  <object id="1395" name="Player" x="2952" y="4768">
+  <object id="1395" name="Player" x="2952" y="4768" visible="0">
    <point/>
   </object>
-  <object id="38" name="Player" x="3731.88" y="3325.94">
+  <object id="38" name="Player" x="3731.88" y="3325.94" visible="0">
    <point/>
   </object>
-  <object id="1398" name="Player" x="1512" y="4104">
+  <object id="1398" name="Player" x="1512" y="4104" visible="0">
    <point/>
   </object>
-  <object id="1399" name="Player" x="4136" y="4112">
+  <object id="1399" name="Player" x="4136" y="4112" visible="0">
    <point/>
   </object>
-  <object id="1400" name="Player" x="2968" y="1048">
+  <object id="1400" name="Player" x="2968" y="1048" visible="0">
    <point/>
   </object>
-  <object id="1401" name="Player" x="6208" y="2832">
+  <object id="1401" name="Player" x="6208" y="2832" visible="0">
    <point/>
   </object>
   <object id="1402" name="Player" x="4888" y="4608">
@@ -166,8 +166,92 @@
   <object id="1403" name="Player" x="936" y="2664">
    <point/>
   </object>
+  <object id="2152" name="Enemy" x="1552" y="5456">
+   <point/>
+  </object>
+  <object id="2153" name="Enemy" x="2800.85" y="6103.88">
+   <point/>
+  </object>
+  <object id="2154" name="Enemy" x="2912.12" y="4851.52">
+   <point/>
+  </object>
+  <object id="2155" name="Enemy" x="1527.27" y="4403.03">
+   <point/>
+  </object>
+  <object id="2156" name="Enemy" x="1987.88" y="3821.21">
+   <point/>
+  </object>
+  <object id="2157" name="Enemy" x="2163.64" y="3054.55">
+   <point/>
+  </object>
+  <object id="2158" name="Enemy" x="2016" y="2120">
+   <point/>
+  </object>
+  <object id="2159" name="Enemy" x="1056" y="2016">
+   <point/>
+  </object>
+  <object id="2160" name="Enemy" x="1444" y="1380">
+   <point/>
+  </object>
+  <object id="2161" name="Enemy" x="2952" y="1624">
+   <point/>
+  </object>
+  <object id="2162" name="Enemy" x="3836" y="2036">
+   <point/>
+  </object>
+  <object id="2163" name="Enemy" x="4048" y="1192">
+   <point/>
+  </object>
+  <object id="2164" name="Enemy" x="5508" y="1852">
+   <point/>
+  </object>
+  <object id="2165" name="Enemy" x="5424" y="2860">
+   <point/>
+  </object>
+  <object id="2166" name="Enemy" x="4840" y="2176">
+   <point/>
+  </object>
+  <object id="2167" name="Enemy" x="3912" y="2872">
+   <point/>
+  </object>
+  <object id="2168" name="Enemy" x="2952" y="3372">
+   <point/>
+  </object>
+  <object id="2169" name="Enemy" x="3332" y="4136">
+   <point/>
+  </object>
+  <object id="2170" name="Enemy" x="4180" y="3872">
+   <point/>
+  </object>
+  <object id="2171" name="Enemy" x="4512" y="4804">
+   <point/>
+  </object>
+  <object id="2172" name="Enemy" x="5156" y="4068">
+   <point/>
+  </object>
+  <object id="2173" name="Enemy" x="4684" y="5556">
+   <point/>
+  </object>
+  <object id="2174" name="Enemy" x="5548" y="5648">
+   <point/>
+  </object>
+  <object id="2175" name="Enemy" x="6000" y="4608">
+   <point/>
+  </object>
+  <object id="2176" name="Enemy" x="6216" y="2572">
+   <point/>
+  </object>
+  <object id="2177" name="Enemy" x="2280" y="4800">
+   <point/>
+  </object>
+  <object id="2178" name="Enemy" x="3808" y="5888">
+   <point/>
+  </object>
+  <object id="2179" name="Enemy" x="6168" y="3376">
+   <point/>
+  </object>
  </objectgroup>
- <objectgroup id="2" name="Collisions">
+ <objectgroup id="2" name="Collisions" visible="0" locked="1">
   <object id="790" x="649.333" y="970.667" width="114.667" height="50.6667"/>
   <object id="791" x="706.667" y="896" width="186.667" height="58.6667"/>
   <object id="792" x="833.333" y="830.667" width="252" height="64"/>
@@ -394,7 +478,7 @@
   <object id="2133" x="2241.33" y="772" width="187.083" height="56"/>
   <object id="2140" x="5828.5" y="2948.5" width="55" height="182"/>
  </objectgroup>
- <objectgroup id="3" name="Objects">
+ <objectgroup id="3" name="Objects" locked="1">
   <object id="1" gid="218" x="4524" y="3872.67" width="64" height="104"/>
   <object id="2" gid="218" x="3670.66" y="4205.33" width="64" height="104"/>
   <object id="3" gid="218" x="2842.67" y="4328" width="64" height="104"/>
@@ -774,7 +858,7 @@
   <object id="2138" gid="216" x="5836" y="3216" width="128" height="192"/>
   <object id="2139" gid="216" x="5821.33" y="3854.67" width="128" height="192"/>
  </objectgroup>
- <objectgroup id="6" name="Rocks">
+ <objectgroup id="6" name="Rocks" locked="1">
   <object id="1410" gid="220" x="4639.33" y="3443.33" width="60" height="60"/>
   <object id="1425" gid="212" x="2752" y="2995.33" width="56" height="60"/>
   <object id="1426" gid="212" x="3081.33" y="2963.34" width="56" height="60"/>
