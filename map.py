@@ -42,12 +42,11 @@ class Pathfinder:
         self.width = width
         self.height = height
         self.collision_sprites = collision_sprites
-        self.grid = None
+        self.grid = self.create_grid() # Create grid when instance is created
         self.finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
 
-        self.create_grid() # Run when instance is created
-
-    def create_grid(self) -> None:
+    def create_grid(self) -> Grid:
+        # Create a matrix representing walkable (1) and unwalkable (0) tiles
         matrix = [[1 for _ in range(self.width)] for _ in range(self.height)]
         for sprite in self.collision_sprites:
             # Calculate which tiles the sprite overlaps
@@ -62,7 +61,7 @@ class Pathfinder:
                 for x in range(left, right + 1):
                     matrix[y][x] = 0
 
-        self.grid = Grid(matrix=matrix)
+        return Grid(matrix=matrix)
 
     def get_path(self, start_pos, end_pos) -> list[pygame.math.Vector2]:
         start_x, start_y = int(start_pos[0] // 64), int(start_pos[1] // 64)

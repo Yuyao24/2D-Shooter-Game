@@ -2,7 +2,7 @@ import pygame, random
 from settings import *
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, position, groups, collision_sprites, player, pathfinder, bullets):
+    def __init__(self, position, groups, collision_sprites, player, pathfinder, bullets) -> None:
         super().__init__(groups)
         # Enemy image
         self.image = pygame.image.load('assets/images/enemy.png').convert_alpha()
@@ -35,7 +35,7 @@ class Enemy(pygame.sprite.Sprite):
 
         self.health = 100
 
-    def update(self, dt):
+    def update(self, dt) -> None:
         if self.active:
             self.pathfind()
             self.handle_movement(dt)
@@ -44,7 +44,7 @@ class Enemy(pygame.sprite.Sprite):
         
         self.check_hit()
 
-    def check_active(self):
+    def check_active(self) -> None:
         enemy_pos = pygame.math.Vector2(self.rect.center)
         target_pos = pygame.math.Vector2(self.target.rect.center)
         if (target_pos - enemy_pos).length() < 500:
@@ -52,7 +52,7 @@ class Enemy(pygame.sprite.Sprite):
         if self.check_hit():
             self.active = True
 
-    def pathfind(self):
+    def pathfind(self) -> None:
         current_time = pygame.time.get_ticks()
         if current_time < self.path_timer:
             return
@@ -73,7 +73,7 @@ class Enemy(pygame.sprite.Sprite):
 
         self.path_timer = current_time + 500 + random.randint(-100, 100)
 
-    def handle_movement(self, dt):
+    def handle_movement(self, dt) -> None:
         enemy_pos = pygame.math.Vector2(self.hitbox.center)
         target_pos = pygame.math.Vector2(self.target.hitbox.center)
 
@@ -102,7 +102,7 @@ class Enemy(pygame.sprite.Sprite):
                 self.rect.midbottom = self.hitbox.midbottom
                 self.path.pop(0)
 
-    def collide(self, direction):
+    def collide(self, direction) -> None:
         for obstacle in self.collision_sprites:
             if obstacle.hitbox.colliderect(self.hitbox):
                 if direction == "horizontal":
@@ -112,12 +112,13 @@ class Enemy(pygame.sprite.Sprite):
                     if self.direction.y < 0: self.hitbox.top = obstacle.hitbox.bottom
                     if self.direction.y > 0: self.hitbox.bottom = obstacle.hitbox.top
 
-    def check_hit(self):
+    def check_hit(self) -> bool:
         for bullet in self.bullets:
             if self.mask.overlap(bullet.mask, (bullet.rect.left - self.rect.left, bullet.rect.top - self.rect.top)):
                 self.take_damage(50)
                 bullet.kill()
                 return True
+        return False
 
 
                 # # Use a set to track enemies already damaged by this bullet
@@ -129,7 +130,7 @@ class Enemy(pygame.sprite.Sprite):
                 #     bullet.damaged_enemies.add(self)  # Mark this enemy as damaged by the bullet
 
 
-    def take_damage(self, amount):
+    def take_damage(self, amount) -> None:
         self.health -= amount
         if self.health <= 0:
             self.kill()
