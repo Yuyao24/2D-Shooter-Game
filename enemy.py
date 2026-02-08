@@ -45,11 +45,10 @@ class Enemy(pygame.sprite.Sprite):
         self.check_hit()
 
     def check_active(self) -> None:
-        enemy_pos = pygame.math.Vector2(self.rect.center)
-        target_pos = pygame.math.Vector2(self.target.rect.center)
-        if (target_pos - enemy_pos).length() < 500:
-            self.active = True
-        if self.check_hit():
+        distance = pygame.math.Vector2(self.rect.center).distance_to(
+            pygame.math.Vector2(self.target.rect.center)
+        )
+        if distance < 500 or self.check_hit():
             self.active = True
 
     def pathfind(self) -> None:
@@ -76,8 +75,9 @@ class Enemy(pygame.sprite.Sprite):
     def handle_movement(self, dt) -> None:
         enemy_pos = pygame.math.Vector2(self.hitbox.center)
         target_pos = pygame.math.Vector2(self.target.hitbox.center)
+        distance = (target_pos - enemy_pos).length()
 
-        if (target_pos - enemy_pos).length() < 64:
+        if distance < 64:
             self.direction = pygame.math.Vector2()
             return
 
@@ -85,19 +85,14 @@ class Enemy(pygame.sprite.Sprite):
             target = self.path[0]
             self.direction = (target - enemy_pos)
 
-            if self.direction.length() > 5:  # Larger threshold
+            if self.direction.length() > 5:
                 self.direction = self.direction.normalize()
-
-                # Move towards target
                 self.hitbox.x += self.direction.x * self.speed * dt
                 self.collide("horizontal")
                 self.hitbox.y += self.direction.y * self.speed * dt
                 self.collide("vertical")
-
-                # Sync position with hitbox
                 self.rect.midbottom = self.hitbox.midbottom
             else:
-                # Snap to target when very close
                 self.hitbox.center = target
                 self.rect.midbottom = self.hitbox.midbottom
                 self.path.pop(0)
@@ -114,24 +109,14 @@ class Enemy(pygame.sprite.Sprite):
 
     def check_hit(self) -> bool:
         for bullet in self.bullets:
-            if self.mask.overlap(bullet.mask, (bullet.rect.left - self.rect.left, bullet.rect.top - self.rect.top)):
-                self.take_damage(50)
+            offset = (bullet.rect.left - self.rect.left, bullet.rect.top - self.rect.top)
+            if self.mask.overlap(bullet.mask, offset):
+                self.take_damage(bullet.damage)
                 bullet.kill()
                 return True
         return False
-
-
-                # # Use a set to track enemies already damaged by this bullet
-                # if not hasattr(bullet, "damaged_enemies"):
-                #     bullet.damaged_enemies = set()  # Initialize the set if it doesn't exist
-
-                # if self not in bullet.damaged_enemies:  # Check if this enemy has already been damaged
-                #     self.take_damage(50)
-                #     bullet.damaged_enemies.add(self)  # Mark this enemy as damaged by the bullet
-
 
     def take_damage(self, amount) -> None:
         self.health -= amount
         if self.health <= 0:
             self.kill()
-        

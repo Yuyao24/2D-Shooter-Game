@@ -20,10 +20,10 @@ def gameplay_loop(screen, clock) -> str:
     for x, y, image in map_tmx.get_layer_by_name("Ground").tiles(): # Create tiles
         GroundTile((x * TILE_SIZE, y * TILE_SIZE), image, (all_sprites,))
 
-    for obj in map_tmx.get_layer_by_name("Rocks"): # Create collision sprites
+    for obj in map_tmx.get_layer_by_name("Rocks"): # Create collision sprites (rocks)
         SmallSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
 
-    for obj in map_tmx.get_layer_by_name("Objects"): # Create collision sprites
+    for obj in map_tmx.get_layer_by_name("Objects"): # Create collision sprites (Trees, pillars)
         TallSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
 
     for obj in map_tmx.get_layer_by_name("Collisions"): # Create collision boxes

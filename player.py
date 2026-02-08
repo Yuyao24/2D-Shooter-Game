@@ -18,6 +18,9 @@ class Player(pygame.sprite.Sprite):
         self.collision_sprites = collision_sprites
         self.offset = groups[0].offset
 
+        # Gun
+        self.gun = Gun()
+
     def update(self, dt) -> None:
         self.handle_movement(dt)
 
@@ -50,16 +53,46 @@ class Player(pygame.sprite.Sprite):
                     if self.direction.y > 0: self.hitbox.bottom = obstacle.hitbox.top
 
     def shoot(self, all_sprites, bullets) -> None:
+        self.gun.shoot(self, all_sprites, bullets, self.collision_sprites)
+
+class Gun:
+    def __init__(self):
+        # Gun stats
+        self.damage = 50
+        self.fire_rate = 0.2 # seconds between shots
+        self.range = 600
+        self.bullet_speed = 1000
+
+        # Cooldown timer
+        self.last_shot_time = 0
+
+    def shoot(self, player, all_sprites, bullets, collision_sprites) -> None:
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_shot_time < self.fire_rate * 1000:
+            return  # Still in cooldown, cannot shoot
+
+        self.last_shot_time = current_time
         mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + all_sprites.offset
-        direction = mouse_pos - pygame.math.Vector2(self.rect.center)
-        Bullet(self.rect.center, direction, (all_sprites, bullets), self.collision_sprites, self)
+        direction = mouse_pos - pygame.math.Vector2(player.rect.center)
+
+        # Default to up if no direction
+        if direction.length() > 0:
+            direction = direction.normalize()
+        else:
+            direction = pygame.math.Vector2(0, -1)
+
+        Bullet(player.rect.center, direction, (all_sprites, bullets), collision_sprites, player, self)
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, position: tuple[int, int], direction: pygame.math.Vector2, groups, collision_sprites, player) -> None:
+    def __init__(self, position: tuple[int, int], direction: pygame.math.Vector2, groups, collision_sprites, player, gun) -> None:
         super().__init__(groups)
         # Bullet image
-        self.image = pygame.image.load("assets/images/Red-Circle-Transparent.png").convert_alpha()
-        self.image = pygame.transform.scale(self.image, (16, 16))
+        self.image = pygame.image.load("assets/images/bullet.png").convert_alpha()
+
+        self.image = pygame.transform.scale(self.image, (32, 32))
+        rotation = direction.angle_to(pygame.math.Vector2(1, 0)) # Rotate bullet to direction of movement
+        self.image = pygame.transform.rotate(self.image, rotation)
+
         self.rect = self.image.get_frect(center=position)
         self.mask = pygame.mask.from_surface(self.image)
         self.z_layer = 1
@@ -69,17 +102,18 @@ class Bullet(pygame.sprite.Sprite):
         self.player = player
 
         # Movement attributes
-        self.direction = direction.normalize() if direction.length() > 0 else pygame.math.Vector2(0, -1)
-        self.speed = 1500
+        self.direction = direction
+        self.speed = gun.bullet_speed
+
+        # Gun stats
+        self.gun_range = gun.range
+        self.damage = gun.damage
 
     def update(self, dt) -> None:
-        if self.direction.length() > 0:
-            self.direction = self.direction.normalize()
-
         player_pos = pygame.math.Vector2(self.player.rect.center)
         bullet_pos = pygame.math.Vector2(self.rect.center)
-         # Remove bullet if too far from player
-        if (player_pos - bullet_pos).length() > 600:
+
+        if (player_pos - bullet_pos).length() > self.gun_range:
             self.kill()
 
         self.rect.x += self.direction.x * self.speed * dt
@@ -90,9 +124,3 @@ class Bullet(pygame.sprite.Sprite):
         for obstacle in self.collision_sprites:
             if obstacle.hitbox.colliderect(self.rect):
                 self.kill()
-
-
-
-
-        
-
