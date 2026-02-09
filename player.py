@@ -1,4 +1,5 @@
 import pygame, random
+from settings import *
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, position: tuple[int, int], groups, collision_sprites) -> None:
@@ -19,7 +20,7 @@ class Player(pygame.sprite.Sprite):
         self.offset = groups[0].offset
 
         # Gun
-        self.gun = Gun()
+        self.gun = Gun(self, groups[0])
 
     def update(self, dt) -> None:
         self.handle_movement(dt)
@@ -55,8 +56,17 @@ class Player(pygame.sprite.Sprite):
     def shoot(self, all_sprites, bullets) -> None:
         self.gun.shoot(self, all_sprites, bullets, self.collision_sprites)
 
-class Gun:
-    def __init__(self) -> None:
+class Gun(pygame.sprite.Sprite):
+    def __init__(self, player, groups) -> None:
+        super().__init__(groups)
+        self.player = player
+
+        self.base_image = pygame.image.load("assets/images/gun.png").convert_alpha()
+        self.base_image = pygame.transform.scale(self.base_image, (96, 48))
+        self.image = self.base_image
+        self.rect = self.image.get_frect(center=self.player.rect.center)
+        self.z_layer = 2
+
         # Gun stats
         self.damage: float = 50.0
         self.fire_rate: float = 0.2 # seconds between shots
@@ -65,6 +75,17 @@ class Gun:
 
         # Cooldown timer
         self.last_shot_time: float = 0.0
+
+    def update(self, dt) -> None:
+        # Rotate gun to face mouse
+        mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + self.player.offset
+        direction = mouse_pos - pygame.math.Vector2(self.player.rect.center)
+
+        if direction.length() > 0:
+            direction = direction.normalize()
+            rotation = direction.angle_to(pygame.math.Vector2(1, 0)) # Rotate gun to direction of movement
+            self.image = pygame.transform.rotate(self.base_image, rotation)
+            self.rect = self.image.get_frect(center=self.player.rect.center)
 
     def shoot(self, player, all_sprites, bullets, collision_sprites) -> None:
         current_time = pygame.time.get_ticks()
@@ -128,5 +149,5 @@ class Bullet(pygame.sprite.Sprite):
         player_pos = pygame.math.Vector2(self.player.rect.center)
         bullet_pos = pygame.math.Vector2(self.rect.center)
 
-        if (player_pos - bullet_pos).length() > self.gun_range:
+        if (player_pos - bullet_pos).length() > self.range:
             self.kill()

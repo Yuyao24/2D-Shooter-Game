@@ -44,7 +44,7 @@ def gameplay_loop(screen, clock) -> str:
     # Create enemies at points far enough from player
     valid_enemy_spawns = [obj for obj in enemy_spawn_points if
                           pygame.math.Vector2(obj.x, obj.y).distance_to(
-                              pygame.math.Vector2(player_spawn.x, player_spawn.y)) > 300]
+                              pygame.math.Vector2(player_spawn.x, player_spawn.y)) > 600]
 
     for spawn in random.sample(valid_enemy_spawns, k=random.randint(9, 12)): # Randomly select spawn points
         for i in range(random.randint(3, 5)): # Spawn 3-5 enemies per point
