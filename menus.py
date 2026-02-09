@@ -16,19 +16,18 @@ class Button:
         self.rect.center = position
 
         # Text
-        self.text_surf = self.font.render(text, True, "#000000")
-        self.text_rect = self.text_surf.get_rect(center=self.rect.center)
+        self.text = Text(text, position, font_size, "#000000")
 
 
     def draw(self, screen) -> None: # Render button
         if self.is_hovered():
             pygame.draw.rect(screen, "White", self.rect)
             pygame.draw.rect(screen, self.colour, self.rect, 3) # Border
-            screen.blit(self.text_surf, self.text_rect)
+            self.text.draw(screen)
         else:
             pygame.draw.rect(screen, self.colour, self.rect)
             pygame.draw.rect(screen, "Black", self.rect, 3) # Border
-            screen.blit(self.text_surf, self.text_rect)
+            self.text.draw(screen)
 
     def is_clicked(self, event) -> bool: # Checks if button is clicked
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # Button 1 is left click
@@ -105,9 +104,7 @@ def pause_menu(screen, clock) -> str:
     background = screen.copy()# Take screenshot of background
 
     # Game paused text
-    paused_font = pygame.font.SysFont(None, 100)
-    paused_surf = paused_font.render("Game Paused", True, "#3F48CC")
-    paused_rect = paused_surf.get_rect(center=(640, 150))
+    paused_text = Text("Game Paused", (640, 150), font_size=100, colour="#3F48CC")
 
     # Create buttons
     resume_button = Button("Resume", (640, 325), 300, 120)
@@ -140,7 +137,7 @@ def pause_menu(screen, clock) -> str:
         screen.blit(overlay, (0, 0))
 
         # Render paused text
-        screen.blit(paused_surf, paused_rect)
+        paused_text.draw(screen)
 
         # Render buttons
         for button in buttons:
