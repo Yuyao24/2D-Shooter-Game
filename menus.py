@@ -40,6 +40,22 @@ class Button:
         mouse_pos = pygame.mouse.get_pos()
         return self.rect.collidepoint(mouse_pos)
 
+class Text:
+    def __init__(self, text: str, position: tuple[int, int], font_size: int = 50, colour: str = "#000000") -> None:
+        self.text = text
+        self.position = position
+        self.font_size = font_size
+        self.colour = colour
+        self.font = pygame.font.SysFont(None, font_size)
+
+        # Text surface and rect
+        self.text_surf = self.font.render(text, True, colour)
+        self.text_rect = self.text_surf.get_rect(center=position)
+
+    def draw(self, screen) -> None:
+        screen.blit(self.text_surf, self.text_rect)
+
+
 def main_menu(screen, clock) -> str:
 
     # Load high score
@@ -50,9 +66,7 @@ def main_menu(screen, clock) -> str:
         high_score = "0"
 
     # Create high-score text
-    score_font = pygame.font.SysFont(None, 100)
-    high_score_surf = score_font.render(f"High Score: {high_score}", True, "#3F48CC")
-    high_score_rect = high_score_surf.get_rect(center=(640, 120))
+    high_score_text = Text(f"High Score: {high_score}", (640, 120), font_size=100, colour="#3F48CC") 
 
     # Create buttons
     resume_game_button = Button("Resume Game", (640, 300), 300, 120)
@@ -82,7 +96,7 @@ def main_menu(screen, clock) -> str:
             button.draw(screen)
 
         # Render high score
-        screen.blit(high_score_surf, high_score_rect)
+        high_score_text.draw(screen)
 
         pygame.display.flip() # Update display
         clock.tick(60)

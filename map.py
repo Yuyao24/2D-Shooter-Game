@@ -39,7 +39,7 @@ class RectSprite(pygame.sprite.Sprite):
 
 class Pathfinder:
     def __init__(self, width, height, collision_sprites) -> None:
-        self.width = width
+        self.width = width # Width and height of map in tiles
         self.height = height
         self.collision_sprites = collision_sprites
         self.grid = self.create_grid() # Create grid when instance is created
