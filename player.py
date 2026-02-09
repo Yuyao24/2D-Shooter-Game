@@ -22,7 +22,7 @@ class Player(pygame.sprite.Sprite):
         self.offset: pygame.Vector2 = groups[0].offset if isinstance(groups, (list, tuple)) else groups.offset
 
         # Gun
-        self.gun: Gun = Gun(self, groups[0] if isinstance(groups, (list, tuple)) else groups)
+        self.gun: Gun = Gun(self, groups[0])  # groups[0] is AllSprites
 
     def update(self, dt: float) -> None:
         """Updates the player state once per frame."""
@@ -68,7 +68,9 @@ class Gun(pygame.sprite.Sprite):
         super().__init__(groups)
         self.player: Player = player
 
-        self.base_image: pygame.Surface = pygame.transform.scale(AssetManager.get_image("assets/images/gun.png"), (96, 48))
+        self.base_image: pygame.Surface = AssetManager.get_image("assets/images/gun.png")
+        self.base_image: pygame.Surface = pygame.transform.scale(self.base_image, (96, 48))
+        self.base_image_flipped: pygame.Surface = pygame.transform.flip(self.base_image, True, False)
         self.image: pygame.Surface = self.base_image
         self.rect: pygame.FRect = self.image.get_frect(center=self.player.rect.center)
         self.z_layer: int = 2
@@ -83,16 +85,26 @@ class Gun(pygame.sprite.Sprite):
         self.last_shot_time: float = 0.0
 
     def update(self, dt: float) -> None:
-        """Rotates the gun to face the mouse cursor."""
+        """Updates the gun's position and rotation based on the player's movement direction and mouse position."""
+
         # Rotate gun to face mouse
         mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + self.player.offset
         direction = mouse_pos - pygame.math.Vector2(self.player.rect.center)
 
         if direction.length() > 0:
             direction = direction.normalize()
-            rotation = direction.angle_to(pygame.math.Vector2(1, 0)) # Rotate gun to direction of movement
-            self.image = pygame.transform.rotate(self.base_image, rotation)
-            self.rect = self.image.get_frect(center=self.player.rect.center)
+
+        base_image = self.base_image
+        aiming_left = direction.x < 0
+        if aiming_left: # Flipped image if aiming left
+            base_image = self.base_image_flipped
+
+        rotation = direction.angle_to(pygame.math.Vector2(1, 0)) # Rotate gun to direction of movement
+        if aiming_left: # Flip rotation if aiming left
+            rotation += 180
+
+        self.image = pygame.transform.rotate(base_image, rotation)
+        self.rect = self.image.get_frect(center=self.player.rect.center) # Update rect position
 
     def shoot(self, player: Player, all_sprites: pygame.sprite.AbstractGroup, bullets: pygame.sprite.Group, collision_sprites: pygame.sprite.Group) -> None:
         """Creates a bullet if the gun is not on cooldown."""

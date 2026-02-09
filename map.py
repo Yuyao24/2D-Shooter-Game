@@ -72,7 +72,8 @@ class Pathfinder:
 
         return Grid(matrix=matrix)
 
-    def get_path(self, start_pos: tuple[float, float] | pygame.Vector2, end_pos: tuple[float, float] | pygame.Vector2) -> list[pygame.Vector2]:
+    def get_path(self, start_pos: tuple[float, float] | pygame.Vector2,
+                 end_pos: tuple[float, float] | pygame.Vector2) -> list[pygame.Vector2]:
         """
         Calculates a path between two world positions.
         

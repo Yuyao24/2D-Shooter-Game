@@ -59,7 +59,7 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
         k = min(len(valid_enemy_spawns), random.randint(9, 12))
         for spawn in random.sample(valid_enemy_spawns, k=k):  # Randomly select spawn points
             for _ in range(random.randint(3, 5)):  # Spawn 3-5 enemies per point
-                # Random offset to prevent stacking (do not mutate TMX object)
+                # Random offset to prevent stacking
                 sx = spawn.x + random.randint(-100, 100)
                 sy = spawn.y + random.randint(-100, 100)
                 Enemy((sx, sy), (all_sprites, enemy_sprites), collision_sprites, player, pathfinder, bullet_sprites)

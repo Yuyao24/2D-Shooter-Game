@@ -1,11 +1,12 @@
 import pygame, random
 from settings import AssetManager, TILE_SIZE
+from map import Pathfinder
 
 class Enemy(pygame.sprite.Sprite):
     """Represents an enemy entity with basic AI and pathfinding."""
     def __init__(self, position: tuple[float, float], groups: pygame.sprite.AbstractGroup | list[pygame.sprite.AbstractGroup], 
                  collision_sprites: pygame.sprite.Group, player: pygame.sprite.Sprite, 
-                 pathfinder: 'Pathfinder', bullets: pygame.sprite.Group) -> None:
+                 pathfinder: Pathfinder, bullets: pygame.sprite.Group) -> None:
         super().__init__(groups)
         # Enemy image
         self.image: pygame.Surface = pygame.transform.scale(AssetManager.get_image('assets/images/enemy.png'), (128, 128))
@@ -26,7 +27,7 @@ class Enemy(pygame.sprite.Sprite):
         self.target: pygame.sprite.Sprite = player
 
         self.active: bool = False
-        self.pathfinder: 'Pathfinder' = pathfinder
+        self.pathfinder: Pathfinder = pathfinder
 
         self.path: list[pygame.Vector2] = []
         self.direction: pygame.Vector2 = pygame.math.Vector2()
