@@ -56,15 +56,15 @@ class Player(pygame.sprite.Sprite):
         self.gun.shoot(self, all_sprites, bullets, self.collision_sprites)
 
 class Gun:
-    def __init__(self):
+    def __init__(self) -> None:
         # Gun stats
-        self.damage = 50
-        self.fire_rate = 0.2 # seconds between shots
-        self.range = 600
-        self.bullet_speed = 1000
+        self.damage: float = 50.0
+        self.fire_rate: float = 0.2 # seconds between shots
+        self.range: float = 600.0
+        self.bullet_speed: float = 1000.0
 
         # Cooldown timer
-        self.last_shot_time = 0
+        self.last_shot_time: float = 0.0
 
     def shoot(self, player, all_sprites, bullets, collision_sprites) -> None:
         current_time = pygame.time.get_ticks()
@@ -81,10 +81,11 @@ class Gun:
         else:
             direction = pygame.math.Vector2(0, -1)
 
-        Bullet(player.rect.center, direction, (all_sprites, bullets), collision_sprites, player, self)
+        Bullet(player.rect.center, direction, (all_sprites, bullets), collision_sprites, player)
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, position: tuple[int, int], direction: pygame.math.Vector2, groups, collision_sprites, player, gun) -> None:
+    def __init__(self, position: tuple[int, int], direction: pygame.math.Vector2, groups, 
+                 collision_sprites, player) -> None:
         super().__init__(groups)
         # Bullet image
         self.image = pygame.image.load("assets/images/bullet.png").convert_alpha()
@@ -103,11 +104,11 @@ class Bullet(pygame.sprite.Sprite):
 
         # Movement attributes
         self.direction = direction
-        self.speed = gun.bullet_speed
+        self.speed = player.gun.bullet_speed
 
         # Gun stats
-        self.gun_range = gun.range
-        self.damage = gun.damage
+        self.range = player.gun.range
+        self.damage = player.gun.damage
 
     def update(self, dt) -> None:
         self.move(dt)
