@@ -1,11 +1,13 @@
+import random
+import pygame
 from pytmx import load_pygame
-from player import *
-from menus import *
-from map import *
-from enemy import *
-from settings import *
+from settings import AllSprites, TILE_SIZE, COLOR_BLACK
+from map import GroundTile, SmallSprite, TallSprite, RectSprite, Pathfinder
+from player import Player
+from enemy import Enemy
+from menus import pause_menu
 
-def gameplay_loop(screen, clock) -> str:
+def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
 
     paused: bool = False
 
@@ -46,12 +48,14 @@ def gameplay_loop(screen, clock) -> str:
                           pygame.math.Vector2(obj.x, obj.y).distance_to(
                               pygame.math.Vector2(player_spawn.x, player_spawn.y)) > 600]
 
-    for spawn in random.sample(valid_enemy_spawns, k=random.randint(9, 12)): # Randomly select spawn points
-        for i in range(random.randint(3, 5)): # Spawn 3-5 enemies per point
-            # Random offset to prevent stacking
-            spawn.x += random.randint(-100, 100)
-            spawn.y += random.randint(-100, 100)
-            Enemy((spawn.x, spawn.y), (all_sprites, enemy_sprites), collision_sprites, player, pathfinder, bullet_sprites)
+    if valid_enemy_spawns:
+        k = min(len(valid_enemy_spawns), random.randint(9, 12))
+        for spawn in random.sample(valid_enemy_spawns, k=k):  # Randomly select spawn points
+            for _ in range(random.randint(3, 5)):  # Spawn 3-5 enemies per point
+                # Random offset to prevent stacking (do not mutate TMX object)
+                sx = spawn.x + random.randint(-100, 100)
+                sy = spawn.y + random.randint(-100, 100)
+                Enemy((sx, sy), (all_sprites, enemy_sprites), collision_sprites, player, pathfinder, bullet_sprites)
 
     while True:
         dt = clock.tick(60) / 1000  # Delta time in seconds
@@ -69,16 +73,14 @@ def gameplay_loop(screen, clock) -> str:
                 if event.button == 3:
                     Enemy(mouse_pos, (all_sprites, enemy_sprites), collision_sprites, player, pathfinder, bullet_sprites)
 
-        if paused: # Check if paused
+        if paused:  # Check if paused
             next_state = pause_menu(screen, clock)
             if next_state == "PLAYING":
                 paused = False
-            elif next_state == "MAIN_MENU":
-                return next_state # Return to game class to call main_menu()
-            elif next_state == "QUIT":
-                return next_state # Return to game class to call quit()
+            elif next_state in {"MAIN_MENU", "QUIT"}:
+                return next_state  # Return to game class to handle state
 
-        screen.fill((0, 0, 0))  # Clear screen with black
+        screen.fill(COLOR_BLACK)  # Clear screen with black
 
         # Draw and update sprites
         all_sprites.draw_with_offset(player.rect.center)

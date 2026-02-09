@@ -1,11 +1,11 @@
-import pygame, random
-from settings import *
+import pygame
+from settings import AssetManager
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, position: tuple[int, int], groups, collision_sprites) -> None:
         super().__init__(groups)
         # Player image
-        self.image = pygame.image.load("assets/images/player.png").convert_alpha()
+        self.image = AssetManager.get_image("assets/images/player.png")
         self.rect = self.image.get_frect(center=position)
         self.hitbox = self.rect.inflate(-60, -90)
         self.hitbox.midbottom = self.rect.midbottom
@@ -61,8 +61,7 @@ class Gun(pygame.sprite.Sprite):
         super().__init__(groups)
         self.player = player
 
-        self.base_image = pygame.image.load("assets/images/gun.png").convert_alpha()
-        self.base_image = pygame.transform.scale(self.base_image, (96, 48))
+        self.base_image = pygame.transform.scale(AssetManager.get_image("assets/images/gun.png"), (96, 48))
         self.image = self.base_image
         self.rect = self.image.get_frect(center=self.player.rect.center)
         self.z_layer = 2
@@ -109,9 +108,8 @@ class Bullet(pygame.sprite.Sprite):
                  collision_sprites, player) -> None:
         super().__init__(groups)
         # Bullet image
-        self.image = pygame.image.load("assets/images/bullet.png").convert_alpha()
+        self.image = pygame.transform.scale(AssetManager.get_image("assets/images/bullet.png"), (32, 32))
 
-        self.image = pygame.transform.scale(self.image, (32, 32))
         rotation = direction.angle_to(pygame.math.Vector2(1, 0)) # Rotate bullet to direction of movement
         self.image = pygame.transform.rotate(self.image, rotation)
 

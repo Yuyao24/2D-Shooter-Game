@@ -1,12 +1,11 @@
 import pygame, random
-from settings import *
+from settings import AssetManager, TILE_SIZE
 
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, position, groups, collision_sprites, player, pathfinder, bullets) -> None:
         super().__init__(groups)
         # Enemy image
-        self.image = pygame.image.load('assets/images/enemy.png').convert_alpha()
-        self.image = pygame.transform.scale(self.image, (128, 128))
+        self.image = pygame.transform.scale(AssetManager.get_image('assets/images/enemy.png'), (128, 128))
         self.rect = self.image.get_frect(center=position)
         self.mask = pygame.mask.from_surface(self.image)
         self.hitbox = self.rect.inflate(-60, -90)

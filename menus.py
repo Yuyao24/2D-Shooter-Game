@@ -1,8 +1,9 @@
 import pygame
+from settings import WINDOW_WIDTH, WINDOW_HEIGHT, COLOR_WHITE, COLOR_BLUE, COLOR_DARK_BLUE, COLOR_BLACK
 
 class Button:
     def __init__(self, text: str, position: tuple[int, int], width: int, height: int,
-                 colour: str = "#00A2E8", font_size: int = 50) -> None:
+                 colour: str = COLOR_BLUE, font_size: int = 50) -> None:
         self.text = text
         self.position = position
         self.width = width
@@ -21,12 +22,12 @@ class Button:
 
     def draw(self, screen) -> None: # Render button
         if self.is_hovered():
-            pygame.draw.rect(screen, "White", self.rect)
+            pygame.draw.rect(screen, COLOR_WHITE, self.rect)
             pygame.draw.rect(screen, self.colour, self.rect, 3) # Border
             self.text.draw(screen)
         else:
             pygame.draw.rect(screen, self.colour, self.rect)
-            pygame.draw.rect(screen, "Black", self.rect, 3) # Border
+            pygame.draw.rect(screen, COLOR_BLACK, self.rect, 3) # Border
             self.text.draw(screen)
 
     def is_clicked(self, event) -> bool: # Checks if button is clicked
@@ -65,12 +66,12 @@ def main_menu(screen, clock) -> str:
         high_score = "0"
 
     # Create high-score text
-    high_score_text = Text(f"High Score: {high_score}", (640, 120), font_size=100, colour="#3F48CC") 
+    high_score_text = Text(f"High Score: {high_score}", (WINDOW_WIDTH // 2, 120), font_size=100, colour=COLOR_DARK_BLUE) 
 
     # Create buttons
-    resume_game_button = Button("Resume Game", (640, 300), 300, 120)
-    new_game_button = Button("New Game", (640, 450), 300, 120)
-    quit_button = Button("Quit", (640, 600), 300, 120)
+    resume_game_button = Button("Resume Game", (WINDOW_WIDTH // 2, 300), 300, 120)
+    new_game_button = Button("New Game", (WINDOW_WIDTH // 2, 450), 300, 120)
+    quit_button = Button("Quit", (WINDOW_WIDTH // 2, 600), 300, 120)
     buttons = [resume_game_button, new_game_button, quit_button]
 
     while True:
@@ -88,7 +89,7 @@ def main_menu(screen, clock) -> str:
         else:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
-        screen.fill("#FFFFFF")  # Clear screen with a white background
+        screen.fill(COLOR_WHITE)  # Clear screen with a white background
 
         # Render buttons
         for button in buttons:
@@ -104,15 +105,15 @@ def pause_menu(screen, clock) -> str:
     background = screen.copy()# Take screenshot of background
 
     # Game paused text
-    paused_text = Text("Game Paused", (640, 150), font_size=100, colour="#3F48CC")
+    paused_text = Text("Game Paused", (WINDOW_WIDTH // 2, 150), font_size=100, colour=COLOR_DARK_BLUE)
 
     # Create buttons
-    resume_button = Button("Resume", (640, 325), 300, 120)
-    quit_button = Button("Save and Quit", (640, 470), 300, 120)
+    resume_button = Button("Resume", (WINDOW_WIDTH // 2, 325), 300, 120)
+    quit_button = Button("Save and Quit", (WINDOW_WIDTH // 2, 470), 300, 120)
     buttons = [resume_button, quit_button]
 
     # Create a transparent overlay
-    overlay = pygame.Surface((1280, 720))
+    overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     overlay.set_alpha(128)  # 0 : transparent, 255 : opaque
     overlay.fill((0, 0, 0))  # Black tint
 

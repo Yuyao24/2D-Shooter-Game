@@ -1,13 +1,15 @@
-import sys, time
-from gameplay import *
-from player import *
+import sys
+import pygame
+from settings import WINDOW_WIDTH, WINDOW_HEIGHT
+from gameplay import gameplay_loop
+from menus import main_menu, pause_menu
 
 class Game:
     def __init__(self) -> None:
-        pygame.init() # Initialize Pygame
-        pygame.display.set_caption("Shooter Game") # Set window title
+        pygame.init()  # Initialize Pygame
+        pygame.display.set_caption("Shooter Game")  # Set window title
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))  # 16:9 aspect ratio
-        self.clock = pygame.time.Clock() # Set up clock timer
+        self.clock = pygame.time.Clock()  # Set up clock timer
 
         self.running: bool = True # Game loop flag
         self.game_state: str = "PLAYING"  # Initial game state
@@ -31,7 +33,7 @@ class Game:
             elif self.game_state == "PAUSED":
                 self.game_state = pause_menu(self.screen, self.clock)
 
-        pygame.quit() # Quit Pygame
+        pygame.quit()  # Quit Pygame
         sys.exit()  # Prevents Pygame quit error
 
 if __name__ == "__main__": # Run the game
