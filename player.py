@@ -2,30 +2,34 @@ import pygame
 from settings import AssetManager
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, position: tuple[int, int], groups, collision_sprites) -> None:
+    """Represents the player-controlled entity."""
+    def __init__(self, position: tuple[int, int], groups: pygame.sprite.AbstractGroup | list[pygame.sprite.AbstractGroup], collision_sprites: pygame.sprite.Group) -> None:
         super().__init__(groups)
         # Player image
-        self.image = AssetManager.get_image("assets/images/player.png")
-        self.rect = self.image.get_frect(center=position)
-        self.hitbox = self.rect.inflate(-60, -90)
+        self.image: pygame.Surface = AssetManager.get_image("assets/images/player.png")
+        self.rect: pygame.FRect = self.image.get_frect(center=position)
+        self.hitbox: pygame.Rect = self.rect.inflate(-60, -90)
         self.hitbox.midbottom = self.rect.midbottom
-        self.z_layer = 1
+        self.z_layer: int = 1
 
         # Movement attributes
         self.speed: int = 300
-        self.direction = pygame.math.Vector2(0, 0)
+        self.direction: pygame.Vector2 = pygame.math.Vector2(0, 0)
 
         # Sprite groups
-        self.collision_sprites = collision_sprites
-        self.offset = groups[0].offset
+        self.collision_sprites: pygame.sprite.Group = collision_sprites
+        # Assuming groups[0] is AllSprites which has the offset
+        self.offset: pygame.Vector2 = groups[0].offset if isinstance(groups, (list, tuple)) else groups.offset
 
         # Gun
-        self.gun = Gun(self, groups[0])
+        self.gun: Gun = Gun(self, groups[0] if isinstance(groups, (list, tuple)) else groups)
 
-    def update(self, dt) -> None:
+    def update(self, dt: float) -> None:
+        """Updates the player state once per frame."""
         self.handle_movement(dt)
 
-    def handle_movement(self, dt) -> None:
+    def handle_movement(self, dt: float) -> None:
+        """Handles player input and movement with collision detection."""
         keys = pygame.key.get_pressed() # Get keys pressed
 
         # Calculate direction
@@ -43,7 +47,8 @@ class Player(pygame.sprite.Sprite):
         self.collide("vertical")
         self.rect.midbottom = self.hitbox.midbottom
 
-    def collide(self, direction) -> None:
+    def collide(self, direction: str) -> None:
+        """Handles collisions with obstacles."""
         for obstacle in self.collision_sprites:
             if obstacle.hitbox.colliderect(self.hitbox):
                 if direction == "horizontal":
@@ -53,18 +58,20 @@ class Player(pygame.sprite.Sprite):
                     if self.direction.y < 0: self.hitbox.top = obstacle.hitbox.bottom
                     if self.direction.y > 0: self.hitbox.bottom = obstacle.hitbox.top
 
-    def shoot(self, all_sprites, bullets) -> None:
+    def shoot(self, all_sprites: pygame.sprite.AbstractGroup, bullets: pygame.sprite.Group) -> None:
+        """Fires the player's weapon."""
         self.gun.shoot(self, all_sprites, bullets, self.collision_sprites)
 
 class Gun(pygame.sprite.Sprite):
-    def __init__(self, player, groups) -> None:
+    """Represents the weapon held by the player."""
+    def __init__(self, player: Player, groups: pygame.sprite.AbstractGroup | list[pygame.sprite.AbstractGroup]) -> None:
         super().__init__(groups)
-        self.player = player
+        self.player: Player = player
 
-        self.base_image = pygame.transform.scale(AssetManager.get_image("assets/images/gun.png"), (96, 48))
-        self.image = self.base_image
-        self.rect = self.image.get_frect(center=self.player.rect.center)
-        self.z_layer = 2
+        self.base_image: pygame.Surface = pygame.transform.scale(AssetManager.get_image("assets/images/gun.png"), (96, 48))
+        self.image: pygame.Surface = self.base_image
+        self.rect: pygame.FRect = self.image.get_frect(center=self.player.rect.center)
+        self.z_layer: int = 2
 
         # Gun stats
         self.damage: float = 50.0
@@ -75,7 +82,8 @@ class Gun(pygame.sprite.Sprite):
         # Cooldown timer
         self.last_shot_time: float = 0.0
 
-    def update(self, dt) -> None:
+    def update(self, dt: float) -> None:
+        """Rotates the gun to face the mouse cursor."""
         # Rotate gun to face mouse
         mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + self.player.offset
         direction = mouse_pos - pygame.math.Vector2(self.player.rect.center)
@@ -86,7 +94,8 @@ class Gun(pygame.sprite.Sprite):
             self.image = pygame.transform.rotate(self.base_image, rotation)
             self.rect = self.image.get_frect(center=self.player.rect.center)
 
-    def shoot(self, player, all_sprites, bullets, collision_sprites) -> None:
+    def shoot(self, player: Player, all_sprites: pygame.sprite.AbstractGroup, bullets: pygame.sprite.Group, collision_sprites: pygame.sprite.Group) -> None:
+        """Creates a bullet if the gun is not on cooldown."""
         current_time = pygame.time.get_ticks()
         if current_time - self.last_shot_time < self.fire_rate * 1000:
             return  # Still in cooldown, cannot shoot
@@ -104,46 +113,52 @@ class Gun(pygame.sprite.Sprite):
         Bullet(player.rect.center, direction, (all_sprites, bullets), collision_sprites, player)
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, position: tuple[int, int], direction: pygame.math.Vector2, groups, 
-                 collision_sprites, player) -> None:
+    """Represents a projectile fired by a gun."""
+    def __init__(self, position: tuple[float, float], direction: pygame.math.Vector2, 
+                 groups: pygame.sprite.AbstractGroup | list[pygame.sprite.AbstractGroup], 
+                 collision_sprites: pygame.sprite.Group, player: Player) -> None:
         super().__init__(groups)
         # Bullet image
-        self.image = pygame.transform.scale(AssetManager.get_image("assets/images/bullet.png"), (32, 32))
+        self.image: pygame.Surface = pygame.transform.scale(AssetManager.get_image("assets/images/bullet.png"), (32, 32))
 
         rotation = direction.angle_to(pygame.math.Vector2(1, 0)) # Rotate bullet to direction of movement
         self.image = pygame.transform.rotate(self.image, rotation)
 
-        self.rect = self.image.get_frect(center=position)
-        self.mask = pygame.mask.from_surface(self.image)
-        self.z_layer = 1
+        self.rect: pygame.FRect = self.image.get_frect(center=position)
+        self.mask: pygame.Mask = pygame.mask.from_surface(self.image)
+        self.z_layer: int = 1
 
         # Sprite groups
-        self.collision_sprites = collision_sprites
-        self.player = player
+        self.collision_sprites: pygame.sprite.Group = collision_sprites
+        self.player: Player = player
 
         # Movement attributes
-        self.direction = direction
-        self.speed = player.gun.bullet_speed
+        self.direction: pygame.Vector2 = direction
+        self.speed: float = player.gun.bullet_speed
 
         # Gun stats
-        self.range = player.gun.range
-        self.damage = player.gun.damage
+        self.range: float = player.gun.range
+        self.damage: float = player.gun.damage
 
-    def update(self, dt) -> None:
+    def update(self, dt: float) -> None:
+        """Updates bullet position and checks for collisions or range expiration."""
         self.move(dt)
         self.check_collision()
         self.check_range()
 
-    def move(self, dt) -> None:
+    def move(self, dt: float) -> None:
+        """Moves the bullet according to its direction and speed."""
         self.rect.x += self.direction.x * self.speed * dt
         self.rect.y += self.direction.y * self.speed * dt
 
     def check_collision(self) -> None:
+        """Checks for collisions with obstacles and destroys the bullet on impact."""
         for obstacle in self.collision_sprites:
             if obstacle.hitbox.colliderect(self.rect):
                 self.kill()
     
     def check_range(self) -> None:
+        """Destroys the bullet if it travels beyond its maximum range."""
         player_pos = pygame.math.Vector2(self.player.rect.center)
         bullet_pos = pygame.math.Vector2(self.rect.center)
 

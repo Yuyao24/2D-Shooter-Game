@@ -5,20 +5,19 @@ from gameplay import gameplay_loop
 from menus import main_menu, pause_menu
 
 class Game:
+    """The main Game class that initializes and runs the game application."""
     def __init__(self) -> None:
         pygame.init()  # Initialize Pygame
         pygame.display.set_caption("Shooter Game")  # Set window title
-        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))  # 16:9 aspect ratio
-        self.clock = pygame.time.Clock()  # Set up clock timer
+        self.screen: pygame.Surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))  # 16:9 aspect ratio
+        self.clock: pygame.time.Clock = pygame.time.Clock()  # Set up clock timer
 
         self.running: bool = True # Game loop flag
         self.game_state: str = "PLAYING"  # Initial game state
                                             # Possible states: MAIN_MENU, PLAYING, PAUSED, UPGRADING, GAME_OVER
-        print("\n" + "-" * 36, "\n")
-        print("CHANGE GAME STATE TO MAIN MENU LATER")
-        print("\n" + "-" * 36 , "\n")
 
     def run(self) -> None:
+        """Starts the main game loop, switching between different game states."""
         while self.running: # Main game loop
             if self.game_state == "MAIN_MENU":
                 self.game_state = main_menu(self.screen, self.clock)

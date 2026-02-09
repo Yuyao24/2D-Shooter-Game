@@ -2,62 +2,72 @@ import pygame
 from settings import WINDOW_WIDTH, WINDOW_HEIGHT, COLOR_WHITE, COLOR_BLUE, COLOR_DARK_BLUE, COLOR_BLACK
 
 class Button:
+    """Button for menus."""
     def __init__(self, text: str, position: tuple[int, int], width: int, height: int,
                  colour: str = COLOR_BLUE, font_size: int = 50) -> None:
-        self.text = text
-        self.position = position
-        self.width = width
-        self.height = height
-        self.colour = colour
-        self.font_size = font_size
-        self.font = pygame.font.SysFont(None, font_size)
+        self.text_content: str = text
+        self.position: tuple[int, int] = position
+        self.width: int = width
+        self.height: int = height
+        self.colour: str = colour
+        self.font_size: int = font_size
+        self.font: pygame.font.Font = pygame.font.SysFont(None, font_size)
 
         # Button rectangle
-        self.rect = pygame.Rect(position, (width, height))
+        self.rect: pygame.Rect = pygame.Rect(position, (width, height))
         self.rect.center = position
 
-        # Text
-        self.text = Text(text, position, font_size, "#000000")
+        # Text object
+        self.text_obj: Text = Text(text, position, font_size, "#000000")
 
 
-    def draw(self, screen) -> None: # Render button
+    def draw(self, screen: pygame.Surface) -> None: 
+        """Renders the button on the given surface."""
         if self.is_hovered():
             pygame.draw.rect(screen, COLOR_WHITE, self.rect)
             pygame.draw.rect(screen, self.colour, self.rect, 3) # Border
-            self.text.draw(screen)
+            self.text_obj.draw(screen)
         else:
             pygame.draw.rect(screen, self.colour, self.rect)
             pygame.draw.rect(screen, COLOR_BLACK, self.rect, 3) # Border
-            self.text.draw(screen)
+            self.text_obj.draw(screen)
 
-    def is_clicked(self, event) -> bool: # Checks if button is clicked
+    def is_clicked(self, event: pygame.event.Event) -> bool: 
+        """Checks if the button was clicked in the given event."""
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # Button 1 is left click
             if self.is_hovered():
                 return True
         return False
 
     def is_hovered(self) -> bool:
+        """Checks if the mouse is currently hovering over the button."""
         mouse_pos = pygame.mouse.get_pos()
         return self.rect.collidepoint(mouse_pos)
 
 class Text:
-    def __init__(self, text: str, position: tuple[int, int], font_size: int = 50, colour: str = "#000000") -> None:
-        self.text = text
-        self.position = position
-        self.font_size = font_size
-        self.colour = colour
-        self.font = pygame.font.SysFont(None, font_size)
+    """Text label."""
+    def __init__(self, text: str, position: tuple[int, int], font_size: int = 50, colour: str | tuple[int, int, int] = "#000000") -> None:
+        self.text: str = text
+        self.position: tuple[int, int] = position
+        self.font_size: int = font_size
+        self.colour: str | tuple[int, int, int] = colour
+        self.font: pygame.font.Font = pygame.font.SysFont(None, font_size)
 
         # Text surface and rect
-        self.text_surf = self.font.render(text, True, colour)
-        self.text_rect = self.text_surf.get_rect(center=position)
+        self.text_surf: pygame.Surface = self.font.render(text, True, colour)
+        self.text_rect: pygame.Rect = self.text_surf.get_rect(center=position)
 
-    def draw(self, screen) -> None:
+    def draw(self, screen: pygame.Surface) -> None:
+        """Renders the text on the given surface."""
         screen.blit(self.text_surf, self.text_rect)
 
 
-def main_menu(screen, clock) -> str:
-
+def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
+    """
+    Displays the main menu and handles user interaction.
+    
+    :return: The next game state (e.g., "PLAYING", "QUIT").
+    """
     # Load high score
     try:
         with open("game_save/highscore.txt", "r") as score_file:
@@ -101,7 +111,12 @@ def main_menu(screen, clock) -> str:
         pygame.display.flip() # Update display
         clock.tick(60)
 
-def pause_menu(screen, clock) -> str:
+def pause_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
+    """
+    Displays the pause menu as a transparent overlay and handles user interaction.
+    
+    :return: The next game state (e.g., "PLAYING", "MAIN_MENU", "QUIT").
+    """
     background = screen.copy()# Take screenshot of background
 
     # Game paused text

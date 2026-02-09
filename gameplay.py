@@ -8,6 +8,13 @@ from enemy import Enemy
 from menus import pause_menu
 
 def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
+    """
+    The main gameplay loop where the game action takes place.
+    
+    :param screen: The surface to draw the game on.
+    :param clock: The clock to control the frame rate.
+    :return: The next game state (e.g., "QUIT", "MAIN_MENU").
+    """
 
     paused: bool = False
 

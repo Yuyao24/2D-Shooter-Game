@@ -2,39 +2,43 @@ import pygame, random
 from settings import AssetManager, TILE_SIZE
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, position, groups, collision_sprites, player, pathfinder, bullets) -> None:
+    """Represents an enemy entity with basic AI and pathfinding."""
+    def __init__(self, position: tuple[float, float], groups: pygame.sprite.AbstractGroup | list[pygame.sprite.AbstractGroup], 
+                 collision_sprites: pygame.sprite.Group, player: pygame.sprite.Sprite, 
+                 pathfinder: 'Pathfinder', bullets: pygame.sprite.Group) -> None:
         super().__init__(groups)
         # Enemy image
-        self.image = pygame.transform.scale(AssetManager.get_image('assets/images/enemy.png'), (128, 128))
-        self.rect = self.image.get_frect(center=position)
-        self.mask = pygame.mask.from_surface(self.image)
-        self.hitbox = self.rect.inflate(-60, -90)
+        self.image: pygame.Surface = pygame.transform.scale(AssetManager.get_image('assets/images/enemy.png'), (128, 128))
+        self.rect: pygame.FRect = self.image.get_frect(center=position)
+        self.mask: pygame.Mask = pygame.mask.from_surface(self.image)
+        self.hitbox: pygame.Rect = self.rect.inflate(-60, -90)
         self.hitbox.midbottom = self.rect.midbottom
-        self.z_layer = 1
+        self.z_layer: int = 1
 
-        self.offset = groups[0].offset
+        self.offset: pygame.Vector2 = groups[0].offset if isinstance(groups, (list, tuple)) else groups.offset
 
         # Sprite groups
-        self.collision_sprites = collision_sprites
-        self.bullets = bullets
+        self.collision_sprites: pygame.sprite.Group = collision_sprites
+        self.bullets: pygame.sprite.Group = bullets
 
         # AI & Pathfinding
-        self.player = player
-        self.target = self.player
+        self.player: pygame.sprite.Sprite = player
+        self.target: pygame.sprite.Sprite = player
 
-        self.active = False
-        self.pathfinder = pathfinder
+        self.active: bool = False
+        self.pathfinder: 'Pathfinder' = pathfinder
 
-        self.path = []
-        self.direction = pygame.math.Vector2()
-        self.speed = random.randint(160, 200)
+        self.path: list[pygame.Vector2] = []
+        self.direction: pygame.Vector2 = pygame.math.Vector2()
+        self.speed: int = random.randint(160, 200)
 
-        self.path_timer = pygame.time.get_ticks() + random.randint(0, 500)
-        self.last_target_tile = None
+        self.path_timer: int = pygame.time.get_ticks() + random.randint(0, 500)
+        self.last_target_tile: tuple[int, int] | None = None
 
-        self.health = 100
+        self.health: int = 100
 
-    def update(self, dt) -> None:
+    def update(self, dt: float) -> None:
+        """Updates the enemy state, including AI and movement."""
         if self.active:
             self.pathfind()
             self.handle_movement(dt)
@@ -44,6 +48,7 @@ class Enemy(pygame.sprite.Sprite):
         self.check_hit()
 
     def check_active(self) -> None:
+        """Checks if the player is close enough to activate the enemy."""
         distance = pygame.math.Vector2(self.rect.center).distance_to(
             pygame.math.Vector2(self.target.rect.center)
         )
@@ -51,6 +56,7 @@ class Enemy(pygame.sprite.Sprite):
             self.active = True
 
     def pathfind(self) -> None:
+        """Updates the path towards the target periodically."""
         current_time = pygame.time.get_ticks()
         if current_time < self.path_timer:
             return
@@ -71,7 +77,8 @@ class Enemy(pygame.sprite.Sprite):
 
         self.path_timer = current_time + 500 + random.randint(-100, 100)
 
-    def handle_movement(self, dt) -> None:
+    def handle_movement(self, dt: float) -> None:
+        """Moves the enemy along the current path."""
         enemy_pos = pygame.math.Vector2(self.hitbox.center)
         target_pos = pygame.math.Vector2(self.target.hitbox.center)
         distance = (target_pos - enemy_pos).length()
@@ -96,7 +103,8 @@ class Enemy(pygame.sprite.Sprite):
                 self.rect.midbottom = self.hitbox.midbottom
                 self.path.pop(0)
 
-    def collide(self, direction) -> None:
+    def collide(self, direction: str) -> None:
+        """Handles collisions with obstacles."""
         for obstacle in self.collision_sprites:
             if obstacle.hitbox.colliderect(self.hitbox):
                 if direction == "horizontal":
@@ -107,6 +115,7 @@ class Enemy(pygame.sprite.Sprite):
                     if self.direction.y > 0: self.hitbox.bottom = obstacle.hitbox.top
 
     def check_hit(self) -> bool:
+        """Checks if any bullet hits the enemy."""
         for bullet in self.bullets:
             offset = (bullet.rect.left - self.rect.left, bullet.rect.top - self.rect.top)
             if self.mask.overlap(bullet.mask, offset):
@@ -115,7 +124,8 @@ class Enemy(pygame.sprite.Sprite):
                 return True
         return False
 
-    def take_damage(self, amount) -> None:
+    def take_damage(self, amount: float) -> None:
+        """Reduces enemy health and kills it if health drops to zero."""
         self.health -= amount
         if self.health <= 0:
             self.kill()
