@@ -7,7 +7,8 @@ from menus import main_menu, pause_menu
 class Game:
     """The main Game class that initializes and runs the game application."""
     def __init__(self) -> None:
-        pygame.init()  # Initialize Pygame
+        pygame.display.init()  # Initialize Pygame
+        pygame.font.init()
         pygame.display.set_caption("Shooter Game")  # Set window title
         self.screen: pygame.Surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))  # 16:9 aspect ratio
         self.clock: pygame.time.Clock = pygame.time.Clock()  # Set up clock timer
