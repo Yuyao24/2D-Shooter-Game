@@ -1,5 +1,5 @@
 import pygame
-from settings import WINDOW_WIDTH, WINDOW_HEIGHT, COLOR_WHITE, COLOR_BLUE, COLOR_DARK_BLUE, COLOR_BLACK
+from settings import WINDOW_WIDTH, WINDOW_HEIGHT, COLOR_WHITE, COLOR_BLUE, COLOR_DARK_BLUE, COLOR_BLACK, COLOR_GREY
 
 class Button:
     """Button for menus."""
@@ -20,23 +20,32 @@ class Button:
         # Text object
         self.text_obj: Text = Text(text, position, font_size, "#000000")
 
+        # Clickable
+        self.is_clickable: bool = True
+
 
     def draw(self, screen: pygame.Surface) -> None: 
         """Renders the button on the given surface."""
-        if self.is_hovered():
-            pygame.draw.rect(screen, COLOR_WHITE, self.rect)
-            pygame.draw.rect(screen, self.colour, self.rect, 3) # Border
-            self.text_obj.draw(screen)
+        if self.is_clickable:
+            if self.is_hovered():
+                pygame.draw.rect(screen, COLOR_WHITE, self.rect)
+                pygame.draw.rect(screen, self.colour, self.rect, 3) # Border
+                self.text_obj.draw(screen)
+            else:
+                pygame.draw.rect(screen, self.colour, self.rect)
+                pygame.draw.rect(screen, COLOR_BLACK, self.rect, 3) # Border
+                self.text_obj.draw(screen)
         else:
-            pygame.draw.rect(screen, self.colour, self.rect)
-            pygame.draw.rect(screen, COLOR_BLACK, self.rect, 3) # Border
+            pygame.draw.rect(screen, COLOR_GREY, self.rect)
+            pygame.draw.rect(screen, COLOR_BLACK, self.rect, 3)  # Border
             self.text_obj.draw(screen)
 
     def is_clicked(self, event: pygame.event.Event) -> bool: 
         """Checks if the button was clicked in the given event."""
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # Button 1 is left click
-            if self.is_hovered():
-                return True
+        if self.is_clickable:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # Button 1 is left click
+                if self.is_hovered():
+                    return True
         return False
 
     def is_hovered(self) -> bool:
@@ -46,7 +55,8 @@ class Button:
 
 class Text:
     """Text label."""
-    def __init__(self, text: str, position: tuple[int, int], font_size: int = 50, colour: str | tuple[int, int, int] = "#000000") -> None:
+    def __init__(self, text: str, position: tuple[int, int], font_size: int = 50,
+                 colour: str | tuple[int, int, int] = "#000000") -> None:
         self.text: str = text
         self.position: tuple[int, int] = position
         self.font_size: int = font_size
@@ -76,7 +86,15 @@ def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
         high_score = "0"
 
     # Create high-score text
-    high_score_text = Text(f"High Score: {high_score}", (WINDOW_WIDTH // 2, 120), font_size=100, colour=COLOR_DARK_BLUE) 
+    high_score_text = Text(f"High Score: {high_score}",
+                           (WINDOW_WIDTH // 2, 120), font_size=100, colour=COLOR_DARK_BLUE)
+
+    # Load save file
+    try:
+        with open("game_save/save_data.txt", "r") as save_file:
+            save_data = save_file.read()
+    except FileNotFoundError:
+        save_data = None
 
     # Create buttons
     resume_game_button = Button("Resume Game", (WINDOW_WIDTH // 2, 300), 300, 120)
@@ -98,6 +116,11 @@ def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
         else:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+
+        if not save_data:  # Disable resume button if no save data
+            resume_game_button.is_clickable = False
+        else:
+            resume_game_button.is_clickable = True
 
         screen.fill(COLOR_WHITE)  # Clear screen with a white background
 
