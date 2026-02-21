@@ -4,7 +4,7 @@ from map import Pathfinder
 
 class Enemy(pygame.sprite.Sprite):
     """Represents an enemy entity with basic AI and pathfinding."""
-    def __init__(self, position: tuple[float, float], groups: pygame.sprite.AbstractGroup | list[pygame.sprite.AbstractGroup], 
+    def __init__(self, position: tuple[float, float], groups: list[pygame.sprite.Group],
                  collision_sprites: pygame.sprite.Group, player: pygame.sprite.Sprite, 
                  pathfinder: Pathfinder, bullets: pygame.sprite.Group) -> None:
         super().__init__(groups)
@@ -37,6 +37,7 @@ class Enemy(pygame.sprite.Sprite):
         self.last_target_tile: tuple[int, int] | None = None
 
         self.health: int = 100
+        self.alive: bool = True
 
     def update(self, dt: float) -> None:
         """Updates the enemy state, including AI and movement."""
@@ -129,4 +130,4 @@ class Enemy(pygame.sprite.Sprite):
         """Reduces enemy health and kills it if health drops to zero."""
         self.health -= amount
         if self.health <= 0:
-            self.kill()
+            self.alive = False

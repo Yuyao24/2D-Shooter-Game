@@ -3,7 +3,7 @@ from settings import AssetManager
 
 class Player(pygame.sprite.Sprite):
     """Represents the player-controlled entity."""
-    def __init__(self, position: tuple[int, int], groups: pygame.sprite.AbstractGroup | list[pygame.sprite.AbstractGroup], collision_sprites: pygame.sprite.Group) -> None:
+    def __init__(self, position: tuple[int, int], groups: list[pygame.sprite.Group], collision_sprites: pygame.sprite.Group) -> None:
         super().__init__(groups)
         # Player image
         self.image: pygame.Surface = AssetManager.get_image("assets/images/player.png")

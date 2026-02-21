@@ -5,7 +5,7 @@ from settings import AllSprites, TILE_SIZE, COLOR_BLACK
 from map import GroundTile, SmallSprite, TallSprite, RectSprite, Pathfinder
 from player import Player
 from enemy import Enemy
-from menus import pause_menu
+from menus import pause_menu, Text
 
 def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     """
@@ -25,19 +25,7 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     bullet_sprites = pygame.sprite.Group()
 
     # Map
-    map_tmx = load_pygame("assets/map/world.tmx")
-    for x, y, image in map_tmx.get_layer_by_name("Ground").tiles(): # Create tiles
-        GroundTile((x * TILE_SIZE, y * TILE_SIZE), image, (all_sprites,))
-
-    for obj in map_tmx.get_layer_by_name("Rocks"): # Create collision sprites (rocks)
-        SmallSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
-
-    for obj in map_tmx.get_layer_by_name("Objects"): # Create collision sprites (Trees, pillars)
-        TallSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
-
-    for obj in map_tmx.get_layer_by_name("Collisions"): # Create collision boxes
-        RectSprite((obj.x, obj.y), pygame.Surface((obj.width, obj.height), pygame.SRCALPHA),
-                   (all_sprites, collision_sprites))
+    map_tmx = load_map(all_sprites, collision_sprites)
 
     # Get spawn points
     player_spawn_points = [obj for obj in map_tmx.get_layer_by_name("Entities") if obj.name == "Player"]
@@ -93,5 +81,28 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
         all_sprites.draw_with_offset(player.rect.center)
         all_sprites.update(dt)
 
+        for enemy in enemy_sprites:
+            if not enemy.alive:
+                enemy_sprites.remove(enemy)
+                all_sprites.remove(enemy)
+
         pygame.display.flip()  # Update the display
+
+def load_map(all_sprites: pygame.sprite.Group, collision_sprites: pygame.sprite.Group):
+    map_tmx = load_pygame("assets/map/world.tmx")
+
+    for x, y, image in map_tmx.get_layer_by_name("Ground").tiles():  # Create tiles
+        GroundTile((x * TILE_SIZE, y * TILE_SIZE), image, (all_sprites,))
+
+    for obj in map_tmx.get_layer_by_name("Rocks"):  # Create collision sprites (rocks)
+        SmallSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
+
+    for obj in map_tmx.get_layer_by_name("Objects"):  # Create collision sprites (Trees, pillars)
+        TallSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
+
+    for obj in map_tmx.get_layer_by_name("Collisions"):  # Create collision boxes
+        RectSprite((obj.x, obj.y), pygame.Surface((obj.width, obj.height), pygame.SRCALPHA),
+                   (all_sprites, collision_sprites))
+
+    return map_tmx
 
