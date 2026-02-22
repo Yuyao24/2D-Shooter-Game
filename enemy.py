@@ -36,8 +36,8 @@ class Enemy(pygame.sprite.Sprite):
         self.path_timer: int = pygame.time.get_ticks() + random.randint(0, 500)
         self.last_target_tile: tuple[int, int] | None = None
 
-        self.health: int = 100
-        self.alive: bool = True
+        # Health
+        self.health: float = 100.0
 
     def update(self, dt: float) -> None:
         """Updates the enemy state, including AI and movement."""
@@ -46,15 +46,13 @@ class Enemy(pygame.sprite.Sprite):
             self.handle_movement(dt)
         else:
             self.check_active()
-        
-        self.check_hit()
 
     def check_active(self) -> None:
         """Checks if the player is close enough to activate the enemy."""
         distance = pygame.math.Vector2(self.rect.center).distance_to(
             pygame.math.Vector2(self.target.rect.center)
         )
-        if distance < 500 or self.check_hit():
+        if distance < 500:
             self.active = True
 
     def pathfind(self) -> None:
@@ -116,18 +114,9 @@ class Enemy(pygame.sprite.Sprite):
                     if self.direction.y < 0: self.hitbox.top = obstacle.hitbox.bottom
                     if self.direction.y > 0: self.hitbox.bottom = obstacle.hitbox.top
 
-    def check_hit(self) -> bool:
-        """Checks if any bullet hits the enemy."""
-        for bullet in self.bullets:
-            offset = (bullet.rect.left - self.rect.left, bullet.rect.top - self.rect.top)
-            if self.mask.overlap(bullet.mask, offset):
-                self.take_damage(bullet.damage)
-                bullet.kill()
-                return True
-        return False
-
-    def take_damage(self, amount: float) -> None:
-        """Reduces enemy health and kills it if health drops to zero."""
+    def take_damage(self, amount: float) -> bool:
+        """Reduces the enemy's health by the given amount and checks for death."""
         self.health -= amount
         if self.health <= 0:
-            self.alive = False
+            return True
+        return False

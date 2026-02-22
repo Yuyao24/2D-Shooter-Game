@@ -78,6 +78,9 @@ def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     
     :return: The next game state (e.g., "PLAYING", "QUIT").
     """
+
+    pygame.mouse.set_visible(True)
+
     # Load high score
     try:
         with open("game_save/highscore.txt", "r") as score_file:
@@ -140,6 +143,9 @@ def pause_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     
     :return: The next game state (e.g., "PLAYING", "MAIN_MENU", "QUIT").
     """
+
+    pygame.mouse.set_visible(True)
+
     background = screen.copy()# Take screenshot of background
 
     # Game paused text

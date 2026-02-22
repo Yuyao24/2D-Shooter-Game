@@ -58,7 +58,7 @@ class Player(pygame.sprite.Sprite):
                     if self.direction.y < 0: self.hitbox.top = obstacle.hitbox.bottom
                     if self.direction.y > 0: self.hitbox.bottom = obstacle.hitbox.top
 
-    def shoot(self, all_sprites: pygame.sprite.AbstractGroup, bullets: pygame.sprite.Group) -> None:
+    def shoot(self, all_sprites: pygame.sprite.Group, bullets: pygame.sprite.Group) -> None:
         """Fires the player's weapon."""
         self.gun.shoot(self, all_sprites, bullets, self.collision_sprites)
 
@@ -82,7 +82,7 @@ class Gun(pygame.sprite.Sprite):
         self.bullet_speed: float = 1000.0
 
         # Cooldown timer
-        self.last_shot_time: float = 0.0
+        self.last_shot_time: int = 0
 
     def update(self, dt: float) -> None:
         """Updates the gun's position and rotation based on the player's movement direction and mouse position."""
@@ -106,13 +106,13 @@ class Gun(pygame.sprite.Sprite):
         self.image = pygame.transform.rotate(base_image, rotation)
         self.rect = self.image.get_frect(center=self.player.rect.center) # Update rect position
 
-    def shoot(self, player: Player, all_sprites: pygame.sprite.AbstractGroup, bullets: pygame.sprite.Group, collision_sprites: pygame.sprite.Group) -> None:
+    def shoot(self, player: Player, all_sprites: pygame.sprite.AbstractGroup,
+              bullets: pygame.sprite.Group, collision_sprites: pygame.sprite.Group) -> None:
         """Creates a bullet if the gun is not on cooldown."""
-        current_time = pygame.time.get_ticks()
-        if current_time - self.last_shot_time < self.fire_rate * 1000:
-            return  # Still in cooldown, cannot shoot
 
-        self.last_shot_time = current_time
+        if not self.check_cooldown():
+            return
+
         mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + all_sprites.offset
         direction = mouse_pos - pygame.math.Vector2(player.rect.center)
 
@@ -122,7 +122,16 @@ class Gun(pygame.sprite.Sprite):
         else:
             direction = pygame.math.Vector2(0, -1)
 
-        Bullet(player.rect.center, direction, (all_sprites, bullets), collision_sprites, player)
+        position = player.rect.center + direction * 64
+
+        Bullet(position, direction, (all_sprites, bullets), collision_sprites, player)
+
+    def check_cooldown(self):
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_shot_time < self.fire_rate * 1000:
+            return False
+        self.last_shot_time = current_time
+        return True
 
 class Bullet(pygame.sprite.Sprite):
     """Represents a projectile fired by a gun."""
@@ -133,7 +142,7 @@ class Bullet(pygame.sprite.Sprite):
         # Bullet image
         self.image: pygame.Surface = pygame.transform.scale(AssetManager.get_image("assets/images/bullet.png"), (32, 32))
 
-        rotation = direction.angle_to(pygame.math.Vector2(1, 0)) # Rotate bullet to direction of movement
+        rotation = direction.angle_to(pygame.math.Vector2(1, 0)) # Rotate bullet
         self.image = pygame.transform.rotate(self.image, rotation)
 
         self.rect: pygame.FRect = self.image.get_frect(center=position)
@@ -153,7 +162,7 @@ class Bullet(pygame.sprite.Sprite):
         self.damage: float = player.gun.damage
 
     def update(self, dt: float) -> None:
-        """Updates bullet position and checks for collisions or range expiration."""
+        """Updates bullet."""
         self.move(dt)
         self.check_collision()
         self.check_range()
@@ -165,9 +174,8 @@ class Bullet(pygame.sprite.Sprite):
 
     def check_collision(self) -> None:
         """Checks for collisions with obstacles and destroys the bullet on impact."""
-        for obstacle in self.collision_sprites:
-            if obstacle.hitbox.colliderect(self.rect):
-                self.kill()
+        if any(obstacle.hitbox.colliderect(self.rect) for obstacle in self.collision_sprites):
+            self.kill()
     
     def check_range(self) -> None:
         """Destroys the bullet if it travels beyond its maximum range."""

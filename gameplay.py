@@ -7,6 +7,23 @@ from player import Player
 from enemy import Enemy
 from menus import pause_menu, Text
 
+
+def bullet_enemy_mask_collide(bullet: pygame.sprite.Sprite, enemy: pygame.sprite.Sprite) -> bool:
+    """
+    Performs a pixel-perfect collision check between a bullet and an enemy using their masks.
+
+    :param bullet: The bullet sprite.
+    :param enemy: The enemy sprite.
+    :return: True if there is a collision, False otherwise.
+    """
+    # Check hitbox collision first
+    if not bullet.rect.colliderect(enemy.rect):
+        return False
+
+    # Pixel-perfect check
+    offset = (bullet.rect.left - enemy.rect.left, bullet.rect.top - enemy.rect.top)
+    return enemy.mask.overlap(bullet.mask, offset) is not None
+
 def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     """
     The main gameplay loop where the game action takes place.
@@ -15,6 +32,11 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     :param clock: The clock to control the frame rate.
     :return: The next game state (e.g., "QUIT", "MAIN_MENU").
     """
+
+    pygame.mouse.set_visible(False)
+    crosshair_img = pygame.image.load("assets/images/crosshair.png").convert_alpha()
+    crosshair_rect = crosshair_img.get_rect()
+    mouse_screen_pos = pygame.math.Vector2(pygame.mouse.get_pos())
 
     paused: bool = False
 
@@ -43,24 +65,29 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
                           pygame.math.Vector2(obj.x, obj.y).distance_to(
                               pygame.math.Vector2(player_spawn.x, player_spawn.y)) > 600]
 
-    if valid_enemy_spawns:
-        k = min(len(valid_enemy_spawns), random.randint(9, 12))
-        for spawn in random.sample(valid_enemy_spawns, k=k):  # Randomly select spawn points
-            for _ in range(random.randint(3, 5)):  # Spawn 3-5 enemies per point
-                # Random offset to prevent stacking
-                sx = spawn.x + random.randint(-100, 100)
-                sy = spawn.y + random.randint(-100, 100)
-                Enemy((sx, sy), (all_sprites, enemy_sprites), collision_sprites, player, pathfinder, bullet_sprites)
+    # if valid_enemy_spawns:
+    #     k = min(len(valid_enemy_spawns), random.randint(9, 12))
+    #     for spawn in random.sample(valid_enemy_spawns, k=k):  # Randomly select spawn points
+    #         for _ in range(random.randint(3, 5)):  # Spawn 3-5 enemies per point
+    #             # Random offset to prevent stacking
+    #             sx = spawn.x + random.randint(-100, 100)
+    #             sy = spawn.y + random.randint(-100, 100)
+    #             Enemy((sx, sy), (all_sprites, enemy_sprites), collision_sprites, player, pathfinder, bullet_sprites)
 
     while True:
-        dt = clock.tick(60) / 1000  # Delta time in seconds
+        dt = clock.tick() / 1000  # Delta time in seconds
 
         for event in pygame.event.get(): # Event loop
             if event.type == pygame.QUIT:
                 return "QUIT"
+
+            if event.type == pygame.MOUSEMOTION:
+                mouse_screen_pos.update(event.pos)
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     paused = True
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + all_sprites.offset
                 if event.button == 1:
@@ -72,6 +99,8 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
             next_state = pause_menu(screen, clock)
             if next_state == "PLAYING":
                 paused = False
+                mouse_screen_pos.update(pygame.mouse.get_pos())
+                pygame.mouse.set_visible(False)
             elif next_state in {"MAIN_MENU", "QUIT"}:
                 return next_state  # Return to game class to handle state
 
@@ -81,10 +110,21 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
         all_sprites.draw_with_offset(player.rect.center)
         all_sprites.update(dt)
 
-        for enemy in enemy_sprites:
-            if not enemy.alive:
-                enemy_sprites.remove(enemy)
-                all_sprites.remove(enemy)
+        # Collision detection between bullets and enemies
+        hits = pygame.sprite.groupcollide(bullet_sprites, enemy_sprites,
+                                          True, False,
+                                          collided=bullet_enemy_mask_collide)
+
+        # Damage enemies and kill them if necessary
+        for bullet, enemies_hit in hits.items():
+            for enemy in enemies_hit:
+                died = enemy.take_damage(bullet.damage)
+                enemy.active = True
+                if died:
+                    enemy.kill()
+
+        crosshair_rect.center = mouse_screen_pos
+        screen.blit(crosshair_img, crosshair_rect)
 
         pygame.display.flip()  # Update the display
 
