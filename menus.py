@@ -59,7 +59,7 @@ class Button:
 class Text:
     """Text label."""
     def __init__(self, text: str, position: tuple[int, int], font_size: int = 50,
-                 colour: str | tuple[int, int, int] = "#000000") -> None:
+                 colour: str | tuple[int, int, int] = "#000000", anchor: str = "center") -> None:
         self.text: str = text
         self.position: tuple[int, int] = position
         self.font_size: int = font_size
@@ -70,6 +70,15 @@ class Text:
         self.text_surf: pygame.Surface = self.font.render(text, True, colour)
         self.text_rect: pygame.Rect = self.text_surf.get_rect(center=position)
 
+        # Adjust text position based on anchor
+        if anchor == "center":
+            self.text_rect.center = position
+        elif anchor == "topleft":
+            self.text_rect.topleft = position
+        elif anchor == "midleft":
+            self.text_rect.midleft = position
+
+
     def draw(self, screen: pygame.Surface) -> None:
         """Renders the text on the given surface."""
         screen.blit(self.text_surf, self.text_rect)
@@ -78,29 +87,38 @@ class HUD:
     """HUD (Heads-Up Display) for displaying player health, credits, ammo, etc."""
     def __init__(self, player: Player) -> None:
         self.player: Player = player
+
         self.ammo_icon: pygame.Surface = pygame.image.load("assets/images/ammo_icon.png")
         self.ammo_icon = pygame.transform.scale(self.ammo_icon, (12, 30))
+
+        self.heart_icon: pygame.Surface = pygame.image.load("assets/images/heart_icon.png")
+        self.heart_icon = pygame.transform.scale(self.heart_icon, (30, 30))
 
     def draw(self, screen: pygame.Surface) -> None:
         """Draws the HUD on the given surface."""
         self.health_bar(screen)
         self.ammo_counter(screen)
         self.credit_counter(screen)
+        self.lives_counter(screen)
 
     def health_bar(self, screen: pygame.Surface) -> None:
-        """Draws a health bar on the given surface."""
+        """Draws the health bar on the given surface."""
+
+        # Calculate health bar width based on current health
         health_ratio = self.player.health / self.player.max_health
         health_bar_width = int(health_ratio * 200)
 
+        # Red for missing health, green for current health
         max_health_bar = pygame.Rect(10, 10, 200, 20)
         current_health_bar = pygame.Rect(10, 10, health_bar_width, 20)
 
-        border_thickness = 3
-        border_rect = max_health_bar.inflate(border_thickness * 2, border_thickness * 2)
-
+        # Draw health bar
         pygame.draw.rect(screen, COLOR_RED, max_health_bar)
         pygame.draw.rect(screen, COLOR_GREEN, current_health_bar)
+
         # Black border around health bar
+        border_thickness = 3
+        border_rect = max_health_bar.inflate(border_thickness * 2, border_thickness * 2)
         pygame.draw.rect(screen, COLOR_BLACK, border_rect, border_thickness)
 
     def ammo_counter(self, screen: pygame.Surface) -> None:
@@ -108,8 +126,8 @@ class HUD:
         current_ammo = self.player.gun.ammo
         max_ammo = self.player.gun.max_ammo
 
-        ammo_text = Text(f"{current_ammo} / {max_ammo}", (105, 678), font_size=48, colour=COLOR_BLUE)
-
+        ammo_text = Text(f"{current_ammo} / {max_ammo}", (55, 678),
+                         font_size=48, colour=COLOR_BLUE, anchor="midleft")
 
         screen.blit(self.ammo_icon, (30, 660))
         ammo_text.draw(screen)
@@ -118,8 +136,15 @@ class HUD:
         """Draws the credit counter on the given surface."""
         current_credits = self.player.money
 
-        credit_text = Text(f"$ {current_credits}", (50, 630), font_size=48, colour=COLOR_BLUE)
+        credit_text = Text(f"$ {current_credits}", (29, 630),
+                           font_size=48, colour=COLOR_BLUE, anchor="midleft")
         credit_text.draw(screen)
+
+    def lives_counter(self, screen: pygame.Surface) -> None:
+        """Draws the lives counter on the given surface."""
+        current_lives = self.player.lives
+        for i in range(current_lives):
+            screen.blit(self.heart_icon, (10 + i * 35, 40))
 
 def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     """
@@ -239,5 +264,4 @@ def pause_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
 
         pygame.display.flip() # Update display
         clock.tick(60)
-
 

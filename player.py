@@ -25,8 +25,9 @@ class Player(pygame.sprite.Sprite):
         self.gun: Gun = Gun(self, groups[0])  # groups[0] is AllSprites
 
         # Health
-        self.health: float = 70.0
+        self.health: float = 75.0
         self.max_health: float = 100.0
+        self.lives: int = 5
 
         # Money
         self.money: int = 0

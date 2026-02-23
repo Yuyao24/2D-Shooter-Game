@@ -60,6 +60,7 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     # Create pathfinder
     pathfinder = Pathfinder(map_tmx.width, map_tmx.height, collision_sprites)
 
+    # Create HUD
     hud = HUD(player)
 
     # Create enemies at points far enough from player
@@ -125,6 +126,7 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
                 if died:
                     enemy.kill()
 
+        # Draw HUD
         hud.draw(screen)
 
         crosshair_rect.center = mouse_screen_pos
