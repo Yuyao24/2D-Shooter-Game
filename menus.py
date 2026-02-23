@@ -1,5 +1,8 @@
 import pygame
-from settings import WINDOW_WIDTH, WINDOW_HEIGHT, COLOR_WHITE, COLOR_BLUE, COLOR_DARK_BLUE, COLOR_BLACK, COLOR_GREY
+from settings import (WINDOW_WIDTH, WINDOW_HEIGHT, COLOR_WHITE, COLOR_BLACK, COLOR_GREY,
+                      COLOR_BLUE, COLOR_DARK_BLUE, COLOR_YELLOW, COLOR_RED, COLOR_GREEN,
+                      COLOR_DARK_GREEN)
+from player import Player
 
 class Button:
     """Button for menus."""
@@ -71,6 +74,52 @@ class Text:
         """Renders the text on the given surface."""
         screen.blit(self.text_surf, self.text_rect)
 
+class HUD:
+    """HUD (Heads-Up Display) for displaying player health, credits, ammo, etc."""
+    def __init__(self, player: Player) -> None:
+        self.player: Player = player
+        self.ammo_icon: pygame.Surface = pygame.image.load("assets/images/ammo_icon.png")
+        self.ammo_icon = pygame.transform.scale(self.ammo_icon, (12, 30))
+
+    def draw(self, screen: pygame.Surface) -> None:
+        """Draws the HUD on the given surface."""
+        self.health_bar(screen)
+        self.ammo_counter(screen)
+        self.credit_counter(screen)
+
+    def health_bar(self, screen: pygame.Surface) -> None:
+        """Draws a health bar on the given surface."""
+        health_ratio = self.player.health / self.player.max_health
+        health_bar_width = int(health_ratio * 200)
+
+        max_health_bar = pygame.Rect(10, 10, 200, 20)
+        current_health_bar = pygame.Rect(10, 10, health_bar_width, 20)
+
+        border_thickness = 3
+        border_rect = max_health_bar.inflate(border_thickness * 2, border_thickness * 2)
+
+        pygame.draw.rect(screen, COLOR_RED, max_health_bar)
+        pygame.draw.rect(screen, COLOR_GREEN, current_health_bar)
+        # Black border around health bar
+        pygame.draw.rect(screen, COLOR_BLACK, border_rect, border_thickness)
+
+    def ammo_counter(self, screen: pygame.Surface) -> None:
+        """Draws the ammo counter on the given surface."""
+        current_ammo = self.player.gun.ammo
+        max_ammo = self.player.gun.max_ammo
+
+        ammo_text = Text(f"{current_ammo} / {max_ammo}", (105, 678), font_size=48, colour=COLOR_BLUE)
+
+
+        screen.blit(self.ammo_icon, (30, 660))
+        ammo_text.draw(screen)
+
+    def credit_counter(self, screen: pygame.Surface) -> None:
+        """Draws the credit counter on the given surface."""
+        current_credits = self.player.money
+
+        credit_text = Text(f"$ {current_credits}", (50, 630), font_size=48, colour=COLOR_BLUE)
+        credit_text.draw(screen)
 
 def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     """

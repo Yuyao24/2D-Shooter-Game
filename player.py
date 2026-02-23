@@ -24,6 +24,13 @@ class Player(pygame.sprite.Sprite):
         # Gun
         self.gun: Gun = Gun(self, groups[0])  # groups[0] is AllSprites
 
+        # Health
+        self.health: float = 70.0
+        self.max_health: float = 100.0
+
+        # Money
+        self.money: int = 0
+
     def update(self, dt: float) -> None:
         """Updates the player state once per frame."""
         self.handle_movement(dt)
@@ -80,6 +87,10 @@ class Gun(pygame.sprite.Sprite):
         self.fire_rate: float = 0.2 # seconds between shots
         self.range: float = 600.0
         self.bullet_speed: float = 1000.0
+
+        # Ammo
+        self.ammo: int = 30
+        self.max_ammo: int = 30
 
         # Cooldown timer
         self.last_shot_time: int = 0

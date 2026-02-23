@@ -5,7 +5,7 @@ from settings import AllSprites, TILE_SIZE, COLOR_BLACK
 from map import GroundTile, SmallSprite, TallSprite, RectSprite, Pathfinder
 from player import Player
 from enemy import Enemy
-from menus import pause_menu, Text
+from menus import pause_menu, Text, HUD
 
 
 def bullet_enemy_mask_collide(bullet: pygame.sprite.Sprite, enemy: pygame.sprite.Sprite) -> bool:
@@ -59,6 +59,8 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
 
     # Create pathfinder
     pathfinder = Pathfinder(map_tmx.width, map_tmx.height, collision_sprites)
+
+    hud = HUD(player)
 
     # Create enemies at points far enough from player
     valid_enemy_spawns = [obj for obj in enemy_spawn_points if
@@ -122,6 +124,8 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
                 enemy.active = True
                 if died:
                     enemy.kill()
+
+        hud.draw(screen)
 
         crosshair_rect.center = mouse_screen_pos
         screen.blit(crosshair_img, crosshair_rect)

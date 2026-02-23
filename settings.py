@@ -13,6 +13,10 @@ COLOR_WHITE = "#FFFFFF"
 COLOR_GREY = "#808080"
 COLOR_BLUE = "#00A2E8"
 COLOR_DARK_BLUE = "#3F48CC"
+COLOR_GREEN = "#19DE21"
+COLOR_DARK_GREEN = "#22B14C"
+COLOR_RED = "#ED1C24"
+COLOR_YELLOW = "#C8A24A"
 
 class AssetManager:
     """Manages game assets like images to ensure they are loaded only once."""
