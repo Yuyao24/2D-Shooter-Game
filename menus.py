@@ -100,6 +100,7 @@ class HUD:
         self.ammo_counter(screen)
         self.credit_counter(screen)
         self.lives_counter(screen)
+        self.reload_progress(screen)
 
     def health_bar(self, screen: pygame.Surface) -> None:
         """Draws the health bar on the given surface."""
@@ -126,7 +127,12 @@ class HUD:
         current_ammo = self.player.gun.ammo
         max_ammo = self.player.gun.max_ammo
 
-        ammo_text = Text(f"{current_ammo} / {max_ammo}", (55, 678),
+        if self.player.gun.is_reloading:
+            text = "RELOADING..."
+        else:
+            text = f"{current_ammo} / {max_ammo}"
+
+        ammo_text = Text(text, (55, 678),
                          font_size=48, colour=COLOR_BLUE, anchor="midleft")
 
         screen.blit(self.ammo_icon, (30, 660))
@@ -145,6 +151,25 @@ class HUD:
         current_lives = self.player.lives
         for i in range(current_lives):
             screen.blit(self.heart_icon, (10 + i * 35, 40))
+
+    def reload_progress(self, screen: pygame.Surface) -> None:
+        """Draws the reload progress bar on the given surface."""
+        if not self.player.gun.is_reloading:
+            return
+
+        now = pygame.time.get_ticks()
+        progress = now - self.player.gun.reload_start_time
+
+        # Calculate progress bar width based on reload time
+        reload_progress = progress / self.player.gun.reload_time
+        progress_bar_width = int(reload_progress * 100)
+
+        bg_rect = pygame.Rect(0, 0, 100, 10)
+        bg_rect.center = (WINDOW_WIDTH // 2, 430)
+        progress_rect = pygame.Rect(bg_rect.left, bg_rect.top, progress_bar_width, 10)
+
+        pygame.draw.rect(screen, COLOR_GREY, bg_rect)
+        pygame.draw.rect(screen, COLOR_BLUE, progress_rect)
 
 def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     """

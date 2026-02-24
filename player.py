@@ -25,7 +25,7 @@ class Player(pygame.sprite.Sprite):
         self.gun: Gun = Gun(self, groups[0])  # groups[0] is AllSprites
 
         # Health
-        self.health: float = 75.0
+        self.health: float = 100.0
         self.max_health: float = 100.0
         self.lives: int = 5
 
@@ -96,8 +96,15 @@ class Gun(pygame.sprite.Sprite):
         # Cooldown timer
         self.last_shot_time: int = 0
 
+        # Reloading
+        self.is_reloading: bool = False
+        self.reload_start_time: int = 0
+        self.reload_time: int = 1500
+
     def update(self, dt: float) -> None:
         """Updates the gun's position and rotation based on the player's movement direction and mouse position."""
+
+        self.update_reload()
 
         # Rotate gun to face mouse
         mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + self.player.offset
@@ -125,18 +132,25 @@ class Gun(pygame.sprite.Sprite):
         if not self.check_cooldown():
             return
 
+        if self.is_reloading:
+            return
+
+        # Calculate bullet direction
         mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + all_sprites.offset
         direction = mouse_pos - pygame.math.Vector2(player.rect.center)
 
-        # Default to up if no direction
         if direction.length() > 0:
             direction = direction.normalize()
-        else:
+        else: # Default to up if no direction
             direction = pygame.math.Vector2(0, -1)
 
         position = player.rect.center + direction * 64
 
         Bullet(position, direction, (all_sprites, bullets), collision_sprites, player)
+        self.ammo -= 1
+
+        if self.ammo <= 0:
+            self.reload()
 
     def check_cooldown(self):
         current_time = pygame.time.get_ticks()
@@ -144,6 +158,24 @@ class Gun(pygame.sprite.Sprite):
             return False
         self.last_shot_time = current_time
         return True
+
+    def reload(self):
+        """Begin a reload that completes after reload_time_ms."""
+        if self.is_reloading or self.ammo == self.max_ammo:
+            return
+
+        self.is_reloading = True
+        self.reload_start_time = pygame.time.get_ticks()
+
+    def update_reload(self):
+        """Completes reload when the timer finishes."""
+        if not self.is_reloading:
+            return
+
+        current_time = pygame.time.get_ticks()
+        if current_time - self.reload_start_time >= self.reload_time:
+            self.ammo = self.max_ammo
+            self.is_reloading = False
 
 class Bullet(pygame.sprite.Sprite):
     """Represents a projectile fired by a gun."""

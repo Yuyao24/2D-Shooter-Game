@@ -90,6 +90,8 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     paused = True
+                if event.key == pygame.K_r:
+                    player.gun.reload()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + all_sprites.offset
