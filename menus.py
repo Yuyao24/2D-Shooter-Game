@@ -1,8 +1,9 @@
 import pygame
-from settings import (WINDOW_WIDTH, WINDOW_HEIGHT, COLOR_WHITE, COLOR_BLACK, COLOR_GREY,
+from settings import (AssetManager, WINDOW_WIDTH, WINDOW_HEIGHT, COLOR_WHITE, COLOR_BLACK, COLOR_GREY,
                       COLOR_BLUE, COLOR_DARK_BLUE, COLOR_YELLOW, COLOR_RED, COLOR_GREEN,
-                      COLOR_DARK_GREEN)
+                      COLOR_DARK_GREEN, WINDOW_CENTER)
 from player import Player
+from flag import Flag
 
 class Button:
     """Button for menus."""
@@ -85,14 +86,19 @@ class Text:
 
 class HUD:
     """HUD (Heads-Up Display) for displaying player health, credits, ammo, etc."""
-    def __init__(self, player: Player) -> None:
+    def __init__(self, player: Player, flag: Flag) -> None:
+        # Player and flag references
         self.player: Player = player
+        self.flag: Flag = flag
 
-        self.ammo_icon: pygame.Surface = pygame.image.load("assets/images/ammo_icon.png")
+        self.ammo_icon: pygame.Surface = AssetManager.get_image("assets/images/ammo_icon.png")
         self.ammo_icon = pygame.transform.scale(self.ammo_icon, (12, 30))
 
-        self.heart_icon: pygame.Surface = pygame.image.load("assets/images/heart_icon.png")
+        self.heart_icon: pygame.Surface = AssetManager.get_image("assets/images/heart_icon.png")
         self.heart_icon = pygame.transform.scale(self.heart_icon, (30, 30))
+
+        self.compass_icon: pygame.Surface = AssetManager.get_image("assets/images/compass_arrow.png")
+        self.compass_icon = pygame.transform.scale(self.compass_icon, (30, 30))
 
     def draw(self, screen: pygame.Surface) -> None:
         """Draws the HUD on the given surface."""
@@ -101,6 +107,7 @@ class HUD:
         self.credit_counter(screen)
         self.lives_counter(screen)
         self.reload_progress(screen)
+        self.flag_compass(screen)
 
     def health_bar(self, screen: pygame.Surface) -> None:
         """Draws the health bar on the given surface."""
@@ -170,6 +177,29 @@ class HUD:
 
         pygame.draw.rect(screen, COLOR_GREY, bg_rect)
         pygame.draw.rect(screen, COLOR_BLUE, progress_rect)
+
+    def flag_compass(self, screen: pygame.Surface) -> None:
+        """Draws the flag pointer on the given surface."""
+        if self.flag.is_planted or self.flag.plant_progress > 0:
+            return # Don't draw if flag is already or being planted
+
+        player_pos = pygame.math.Vector2(self.player.rect.center)
+        flag_pos = pygame.math.Vector2(self.flag.rect.center)
+
+        # Calculate direction vector
+        direction = flag_pos - player_pos
+        if direction.length() == 0:
+            direction = pygame.math.Vector2(0, 1) # Default to up if on top of flag
+        direction = direction.normalize()
+
+        arrow_pos = pygame.math.Vector2(WINDOW_CENTER) + direction * 100
+
+        # Rotate arrow to face flag
+        rotation = direction.angle_to(pygame.math.Vector2(0, -1))
+        rotated_image = pygame.transform.rotate(self.compass_icon, rotation)
+        rotated_rect = rotated_image.get_rect(center=arrow_pos)
+
+        screen.blit(rotated_image, rotated_rect)
 
 def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     """

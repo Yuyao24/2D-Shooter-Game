@@ -84,7 +84,7 @@ class Gun(pygame.sprite.Sprite):
         self.z_layer: int = 2
 
         # Gun stats
-        self.damage: float = 50.0
+        self.damage: float = 25.0
         self.fire_rate: float = 0.2 # seconds between shots
         self.range: float = 600.0
         self.bullet_speed: float = 1000.0
@@ -99,7 +99,7 @@ class Gun(pygame.sprite.Sprite):
         # Reloading
         self.is_reloading: bool = False
         self.reload_start_time: int = 0
-        self.reload_time: int = 1500
+        self.reload_time: int = 2500
 
     def update(self, dt: float) -> None:
         """Updates the gun's position and rotation based on the player's movement direction and mouse position."""

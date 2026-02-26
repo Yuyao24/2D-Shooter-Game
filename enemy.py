@@ -6,7 +6,7 @@ class Enemy(pygame.sprite.Sprite):
     """Represents an enemy entity with basic AI and pathfinding."""
     def __init__(self, position: tuple[float, float], groups: list[pygame.sprite.Group],
                  collision_sprites: pygame.sprite.Group, player: pygame.sprite.Sprite, 
-                 pathfinder: Pathfinder, bullets: pygame.sprite.Group) -> None:
+                 pathfinder: Pathfinder) -> None:
         super().__init__(groups)
         # Enemy image
         self.image: pygame.Surface = pygame.transform.scale(AssetManager.get_image('assets/images/enemy.png'), (128, 128))
@@ -20,7 +20,6 @@ class Enemy(pygame.sprite.Sprite):
 
         # Sprite groups
         self.collision_sprites: pygame.sprite.Group = collision_sprites
-        self.bullets: pygame.sprite.Group = bullets
 
         # AI & Pathfinding
         self.player: pygame.sprite.Sprite = player
@@ -31,7 +30,7 @@ class Enemy(pygame.sprite.Sprite):
 
         self.path: list[pygame.Vector2] = []
         self.direction: pygame.Vector2 = pygame.math.Vector2()
-        self.speed: int = random.randint(160, 200)
+        self.speed: int = random.randint(200, 300)
 
         self.path_timer: int = pygame.time.get_ticks() + random.randint(0, 500)
         self.last_target_tile: tuple[int, int] | None = None
