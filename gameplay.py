@@ -8,6 +8,26 @@ from enemy import Enemy
 from menus import pause_menu, Text, HUD
 from flag import Flag
 
+def damage_enemies(bullet_sprites, enemy_sprites) -> None:
+    """
+    Detects collisions between bullets and enemies, and deals damage to them.
+    Kills enemies if health drops to 0.
+
+    :param bullet_sprites: Group of bullet sprite objects.
+    :param enemy_sprites: Group of enemy sprite objects.
+    """
+    # Collision detection between bullets and enemies
+    hits = pygame.sprite.groupcollide(bullet_sprites, enemy_sprites,
+                                      True, False,
+                                      collided=bullet_enemy_mask_collide)
+
+    # Damage enemies and kill them if necessary
+    for bullet, enemies_hit in hits.items():
+        for enemy in enemies_hit:
+            died = enemy.take_damage(bullet.damage)
+            enemy.active = True
+            if died:
+                enemy.kill()
 
 def bullet_enemy_mask_collide(bullet: pygame.sprite.Sprite, enemy: pygame.sprite.Sprite) -> bool:
     """
@@ -120,10 +140,8 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
         all_sprites.draw_with_offset(player.rect.center)
         all_sprites.update(dt)
 
-        # Collision detection between bullets and enemies
-        hits = pygame.sprite.groupcollide(bullet_sprites, enemy_sprites,
-                                          True, False,
-                                          collided=bullet_enemy_mask_collide)
+        # Calculate bullet-enemy collisions and damage
+        damage_enemies(bullet_sprites, enemy_sprites)
 
         # Damage enemies and kill them if necessary
         for bullet, enemies_hit in hits.items():
@@ -136,6 +154,7 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
         # Draw HUD
         hud.draw(screen)
 
+        # Draw crosshair
         crosshair_rect.center = mouse_screen_pos
         screen.blit(crosshair_img, crosshair_rect)
 
