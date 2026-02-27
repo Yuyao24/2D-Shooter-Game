@@ -143,20 +143,18 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
         # Calculate bullet-enemy collisions and damage
         damage_enemies(bullet_sprites, enemy_sprites)
 
-        # Damage enemies and kill them if necessary
-        for bullet, enemies_hit in hits.items():
-            for enemy in enemies_hit:
-                died = enemy.take_damage(bullet.damage)
-                enemy.active = True
-                if died:
-                    enemy.kill()
-
         # Draw HUD
         hud.draw(screen)
 
         # Draw crosshair
         crosshair_rect.center = mouse_screen_pos
         screen.blit(crosshair_img, crosshair_rect)
+
+        # Flag win/loss
+        if flag.outcome == "DEFENDED":
+            Text("You Won!", (200, 200), 64, "White").draw(screen)
+        elif flag.outcome == "DESTROYED":
+            Text("You Lost!", (200, 200), 64, "White").draw(screen)
 
         pygame.display.flip()  # Update the display
 

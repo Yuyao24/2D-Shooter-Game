@@ -15,7 +15,6 @@ class Button:
         self.height: int = height
         self.colour: str = colour
         self.font_size: int = font_size
-        self.font: pygame.font.Font = pygame.font.SysFont(None, font_size)
 
         # Button rectangle
         self.rect: pygame.Rect = pygame.Rect(position, (width, height))
@@ -26,7 +25,6 @@ class Button:
 
         # Clickable
         self.is_clickable: bool = True
-
 
     def draw(self, screen: pygame.Surface) -> None: 
         """Renders the button on the given surface."""
@@ -65,7 +63,7 @@ class Text:
         self.position: tuple[int, int] = position
         self.font_size: int = font_size
         self.colour: str | tuple[int, int, int] = colour
-        self.font: pygame.font.Font = pygame.font.SysFont(None, font_size)
+        self.font: pygame.font.Font = pygame.font.Font(None, font_size)
 
         # Text surface and rect
         self.text_surf: pygame.Surface = self.font.render(text, True, colour)

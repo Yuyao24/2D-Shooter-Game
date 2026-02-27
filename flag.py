@@ -38,11 +38,10 @@ class Flag(pygame.sprite.Sprite):
         # Defense mechanics
         self.timer: float = 60.0
         self.max_timer: float = 120.0
-        self.damage_per_hit: float = 3.0
+        self.damage_per_hit: float = 2.0
 
-        # Status
-        self.defended: bool = False
-        self.destroyed: bool = False
+        # Outcome
+        self.outcome: str | None = None  # "DEFENDED" or "DESTROYED"
 
         # Player reference
         self.player: Player = player
@@ -52,6 +51,8 @@ class Flag(pygame.sprite.Sprite):
         if not self.is_planted:
             self.update_planting(dt)
             self.draw_site_radius()
+        else:
+            self.update_defense(dt)
 
     def update_planting(self, dt: float) -> None:
         """Handles planting with circular arc progress visualization."""
@@ -96,3 +97,11 @@ class Flag(pygame.sprite.Sprite):
         self.image = self.planted_image
         self.rect = self.image.get_frect(midbottom=self.position)
 
+    def update_defense(self, dt: float) -> None:
+        """Handles defense mechanics."""
+        if not self.outcome:
+            self.timer -= dt # Increase timer
+            if self.timer <= 0:
+                self.outcome = "DEFENDED"
+            if self.timer >= self.max_timer:
+                self.outcome = "DESTROYED"
