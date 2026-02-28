@@ -10,6 +10,7 @@ class Player(pygame.sprite.Sprite):
         self.rect: pygame.FRect = self.image.get_frect(center=position)
         self.hitbox: pygame.Rect = self.rect.inflate(-60, -90)
         self.hitbox.midbottom = self.rect.midbottom
+        self.mask: pygame.Mask = pygame.mask.from_surface(self.image)
         self.z_layer: int = 1
 
         # Movement attributes
@@ -69,6 +70,10 @@ class Player(pygame.sprite.Sprite):
     def shoot(self, all_sprites: pygame.sprite.Group, bullets: pygame.sprite.Group) -> None:
         """Fires the player's weapon."""
         self.gun.shoot(self, all_sprites, bullets, self.collision_sprites)
+
+    def take_damage(self, amount: float) -> None:
+        """Reduces the player's health by the given amount."""
+        self.health -= amount
 
 class Gun(pygame.sprite.Sprite):
     """Represents the weapon held by the player."""

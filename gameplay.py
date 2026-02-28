@@ -4,7 +4,7 @@ from pytmx import load_pygame
 from settings import AllSprites, TILE_SIZE, COLOR_BLACK
 from map import GroundTile, SmallSprite, TallSprite, RectSprite, Pathfinder
 from player import Player
-from enemy import Enemy
+from enemy import MeleeEnemy, RangedEnemy
 from menus import pause_menu, Text, HUD
 from flag import Flag
 
@@ -73,13 +73,18 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     # Get spawn points
     player_spawn_points = [obj for obj in map_tmx.get_layer_by_name("Entities") if obj.name == "Player"]
     enemy_spawn_points = [obj for obj in map_tmx.get_layer_by_name("Entities") if obj.name == "Enemy"]
+    flag_spawn_points = [obj for obj in map_tmx.get_layer_by_name("Entities") if obj.name == "Flag"]
 
     # Create player
     player_spawn = random.choice(player_spawn_points)
     player = Player((player_spawn.x, player_spawn.y), (all_sprites,), collision_sprites)
 
     # Create flag
-    flag = Flag((player_spawn.x + 200, player_spawn.y),
+    valid_flag_spawns = [obj for obj in flag_spawn_points if
+                         pygame.math.Vector2(obj.x, obj.y).distance_to(
+                             pygame.math.Vector2(player_spawn.x, player_spawn.y)) > 2500]
+    flag_spawn = random.choice(valid_flag_spawns)
+    flag = Flag((flag_spawn.x, flag_spawn.y),
                 (all_sprites,), player)
 
     # Create pathfinder
@@ -100,7 +105,10 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     #             # Random offset to prevent stacking
     #             sx = spawn.x + random.randint(-100, 100)
     #             sy = spawn.y + random.randint(-100, 100)
-    #             Enemy((sx, sy), (all_sprites, enemy_sprites), collision_sprites, player, pathfinder)
+    #             if random.random() < (2/3):
+    #                 MeleeEnemy((sx, sy), (all_sprites, enemy_sprites), collision_sprites, player, pathfinder)
+    #             else:
+    #                 RangedEnemy((sx, sy), (all_sprites, enemy_sprites), collision_sprites, player, pathfinder)
 
     while True:
         dt = clock.tick() / 1000  # Delta time in seconds
@@ -123,7 +131,7 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
                 if event.button == 1:
                     player.shoot(all_sprites, bullet_sprites)
                 if event.button == 3:
-                    Enemy(mouse_pos, (all_sprites, enemy_sprites), collision_sprites, player, pathfinder)
+                    RangedEnemy(mouse_pos, (all_sprites, enemy_sprites), collision_sprites, player, pathfinder)
 
         if paused:  # Check if paused
             next_state = pause_menu(screen, clock)
