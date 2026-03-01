@@ -113,7 +113,8 @@ class Gun(pygame.sprite.Sprite):
 
         # Rotate gun to face mouse
         mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + self.player.offset
-        direction = mouse_pos - pygame.math.Vector2(self.player.rect.center)
+        player_pos = pygame.math.Vector2(self.player.rect.center)
+        direction = mouse_pos - player_pos
 
         if direction.length() > 0:
             direction = direction.normalize()

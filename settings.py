@@ -50,9 +50,9 @@ class AllSprites(pygame.sprite.Group):
         
         :param target_pos: The position the camera should center on (usually the player).
         """
-        self.offset.x = target_pos[0] - WINDOW_WIDTH / 2
-        self.offset.y = target_pos[1] - WINDOW_HEIGHT / 2
+        self.offset.x = int(target_pos[0] - WINDOW_WIDTH / 2)
+        self.offset.y = int(target_pos[1] - WINDOW_HEIGHT / 2)
         
         # Sort by z_layer then by bottom Y for Y-sorting
         for sprite in sorted(self.sprites(), key=lambda s: (getattr(s, 'z_layer', 0), s.rect.bottom)):
-            self.display_surface.blit(sprite.image, sprite.rect.topleft - self.offset)
+            self.display_surface.blit(sprite.image, (int(sprite.rect.left - self.offset.x), int(sprite.rect.top - self.offset.y)))

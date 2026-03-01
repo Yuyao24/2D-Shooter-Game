@@ -166,8 +166,8 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
         screen.fill(COLOR_BLACK)  # Clear screen with black
 
         # Draw and update sprites
-        all_sprites.draw_with_offset(player.rect.center)
         all_sprites.update(dt)
+        all_sprites.draw_with_offset(player.rect.center)
 
         # Calculate bullet-enemy collisions and damage
         damage_enemies(bullet_sprites, enemy_sprites)
