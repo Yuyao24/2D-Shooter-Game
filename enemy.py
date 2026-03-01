@@ -5,7 +5,7 @@ from map import Pathfinder
 class BaseEnemy(pygame.sprite.Sprite):
     """Represents an enemy entity with basic AI and pathfinding."""
     def __init__(self, position: tuple[float, float], groups: list[pygame.sprite.Group],
-                 collision_sprites: pygame.sprite.Group, player: pygame.sprite.Sprite, 
+                 collision_sprites: pygame.sprite.Group, player: pygame.sprite.Sprite, flag: pygame.sprite.Sprite,
                  pathfinder: Pathfinder) -> None:
         super().__init__(groups)
         # Enemy image
@@ -23,6 +23,7 @@ class BaseEnemy(pygame.sprite.Sprite):
 
         # AI & Pathfinding
         self.player: pygame.sprite.Sprite = player
+        self.flag: pygame.sprite.Sprite = flag
         self.target: pygame.sprite.Sprite = player
 
         self.active: bool = False
@@ -45,11 +46,19 @@ class BaseEnemy(pygame.sprite.Sprite):
         raise NotImplementedError ("update() must be implemented in subclasses.")
 
     def check_active(self) -> None:
-        """Checks if the player is close enough to activate the enemy."""
+        """
+        Checks if the player is close enough to activate the enemy.
+        Checks if flag is planted and activates the enemy sets target to flag.
+        """
         distance = pygame.math.Vector2(self.rect.center).distance_to(
-            pygame.math.Vector2(self.target.rect.center)
-        )
+                    pygame.math.Vector2(self.target.rect.center))
+        # Check if player is within activation range
         if distance < 500:
+            self.active = True
+
+        # Check if flag is planted
+        if self.flag.is_planted:
+            self.target = self.flag
             self.active = True
 
     def pathfind(self) -> None:
@@ -121,9 +130,9 @@ class BaseEnemy(pygame.sprite.Sprite):
 class MeleeEnemy(BaseEnemy):
     """A stronger enemy that can deal damage to the player on contact."""
     def __init__(self, position: tuple[float, float], groups: list[pygame.sprite.Group],
-                 collision_sprites: pygame.sprite.Group, player: pygame.sprite.Sprite,
+                 collision_sprites: pygame.sprite.Group, player: pygame.sprite.Sprite, flag: pygame.sprite.Sprite,
                  pathfinder: Pathfinder) -> None:
-        super().__init__(position, groups, collision_sprites, player, pathfinder)
+        super().__init__(position, groups, collision_sprites, player, flag, pathfinder)
 
         # Stats
         self.health = 100.0
@@ -157,9 +166,9 @@ class MeleeEnemy(BaseEnemy):
 class RangedEnemy(BaseEnemy):
     """A stronger enemy that can deal damage to the player on contact."""
     def __init__(self, position: tuple[float, float], groups: list[pygame.sprite.Group],
-                 collision_sprites: pygame.sprite.Group, player: pygame.sprite.Sprite,
+                 collision_sprites: pygame.sprite.Group, player: pygame.sprite.Sprite, flag: pygame.sprite.Sprite,
                  pathfinder: Pathfinder) -> None:
-        super().__init__(position, groups, collision_sprites, player, pathfinder)
+        super().__init__(position, groups, collision_sprites, player, flag, pathfinder)
 
         # Stats
         self.health = 80.0

@@ -24,6 +24,7 @@ class Flag(pygame.sprite.Sprite):
 
         # Position
         self.position: pygame.Vector2 = pygame.Vector2(position)
+        self.hitbox: pygame.Rect | None = None
 
         # Start unplanted
         self.image = self.unplanted_image
@@ -96,6 +97,8 @@ class Flag(pygame.sprite.Sprite):
         self.is_planted = True
         self.image = self.planted_image
         self.rect = self.image.get_frect(midbottom=self.position)
+        self.hitbox = self.rect.inflate(-29, -26)
+        self.hitbox.midbottom = self.position
 
     def update_defense(self, dt: float) -> None:
         """Handles defense mechanics."""
@@ -105,3 +108,7 @@ class Flag(pygame.sprite.Sprite):
                 self.outcome = "DEFENDED"
             if self.timer >= self.max_timer:
                 self.outcome = "DESTROYED"
+
+    def take_damage(self, amount: float) -> None:
+        """Increases timer by self.damage_per_hit."""
+        self.timer += self.damage_per_hit

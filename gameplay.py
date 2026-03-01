@@ -8,6 +8,24 @@ from enemy import MeleeEnemy, RangedEnemy
 from menus import pause_menu, Text, HUD
 from flag import Flag
 
+def load_map(all_sprites: pygame.sprite.Group, collision_sprites: pygame.sprite.Group):
+    map_tmx = load_pygame("assets/map/world.tmx")
+
+    for x, y, image in map_tmx.get_layer_by_name("Ground").tiles():  # Create tiles
+        GroundTile((x * TILE_SIZE, y * TILE_SIZE), image, (all_sprites,))
+
+    for obj in map_tmx.get_layer_by_name("Rocks"):  # Create collision sprites (rocks)
+        SmallSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
+
+    for obj in map_tmx.get_layer_by_name("Objects"):  # Create collision sprites (Trees, pillars)
+        TallSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
+
+    for obj in map_tmx.get_layer_by_name("Collisions"):  # Create collision boxes
+        RectSprite((obj.x, obj.y), pygame.Surface((obj.width, obj.height), pygame.SRCALPHA),
+                   (all_sprites, collision_sprites))
+
+    return map_tmx
+
 def damage_enemies(bullet_sprites, enemy_sprites) -> None:
     """
     Detects collisions between bullets and enemies, and deals damage to them.
@@ -131,7 +149,10 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
                 if event.button == 1:
                     player.shoot(all_sprites, bullet_sprites)
                 if event.button == 3:
-                    RangedEnemy(mouse_pos, (all_sprites, enemy_sprites), collision_sprites, player, pathfinder)
+                    if random.random() < 0.5:
+                        RangedEnemy(mouse_pos, (all_sprites, enemy_sprites), collision_sprites, player, flag, pathfinder)
+                    else:
+                        MeleeEnemy(mouse_pos, (all_sprites, enemy_sprites), collision_sprites, player, flag, pathfinder)
 
         if paused:  # Check if paused
             next_state = pause_menu(screen, clock)
@@ -164,23 +185,10 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
         elif flag.outcome == "DESTROYED":
             Text("You Lost!", (200, 200), 64, "White").draw(screen)
 
+        flag_pos = pygame.math.Vector2(flag.rect.center) - all_sprites.offset - pygame.math.Vector2(0, 100)
+        Text(f"{flag.timer:.2f}", (flag_pos.x, flag_pos.y), 64, "White").draw(screen)
+
         pygame.display.flip()  # Update the display
 
-def load_map(all_sprites: pygame.sprite.Group, collision_sprites: pygame.sprite.Group):
-    map_tmx = load_pygame("assets/map/world.tmx")
 
-    for x, y, image in map_tmx.get_layer_by_name("Ground").tiles():  # Create tiles
-        GroundTile((x * TILE_SIZE, y * TILE_SIZE), image, (all_sprites,))
-
-    for obj in map_tmx.get_layer_by_name("Rocks"):  # Create collision sprites (rocks)
-        SmallSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
-
-    for obj in map_tmx.get_layer_by_name("Objects"):  # Create collision sprites (Trees, pillars)
-        TallSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
-
-    for obj in map_tmx.get_layer_by_name("Collisions"):  # Create collision boxes
-        RectSprite((obj.x, obj.y), pygame.Surface((obj.width, obj.height), pygame.SRCALPHA),
-                   (all_sprites, collision_sprites))
-
-    return map_tmx
 
