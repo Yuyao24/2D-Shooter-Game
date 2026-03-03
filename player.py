@@ -3,7 +3,9 @@ from settings import AssetManager
 
 class Player(pygame.sprite.Sprite):
     """Represents the player-controlled entity."""
-    def __init__(self, position: tuple[int, int], groups: list[pygame.sprite.Group], collision_sprites: pygame.sprite.Group) -> None:
+
+    def __init__(self, position: tuple[int, int], groups: list[pygame.sprite.Group],
+                 collision_sprites: pygame.sprite.Group) -> None:
         super().__init__(groups)
         # Player image
         self.image: pygame.Surface = AssetManager.get_image("assets/images/player.png")
@@ -74,6 +76,23 @@ class Player(pygame.sprite.Sprite):
     def take_damage(self, amount: float) -> None:
         """Reduces the player's health by the given amount."""
         self.health -= amount
+
+    def reset(self, new_position: tuple[float, float]) -> None:
+        """
+        Resets player for new round while keeping persistent stats.
+        :param new_position: The new position of the player.
+        """
+        # Reset position
+        self.rect.center = new_position
+        self.hitbox.midbottom = self.rect.midbottom
+        self.direction = pygame.math.Vector2(0, 0)
+
+        # Reset health to max (upgrades might have increased max_health)
+        self.health = self.max_health
+
+        # Reset gun
+        self.gun.ammo = self.gun.max_ammo
+        self.gun.is_reloading = False
 
 class Gun(pygame.sprite.Sprite):
     """Represents the weapon held by the player."""
