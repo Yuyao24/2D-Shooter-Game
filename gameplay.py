@@ -1,7 +1,7 @@
 import random
 import pygame
 from pytmx import load_pygame
-from settings import AllSprites, TILE_SIZE, COLOR_BLACK
+from settings import *
 from map import GroundTile, SmallSprite, TallSprite, RectSprite, Pathfinder
 from player import Player
 from enemy import MeleeEnemy, RangedEnemy
@@ -64,9 +64,6 @@ class RoundManager:
         self.all_sprites.draw_with_offset(self.player.rect.center)
         self.hud.draw(self.screen)
 
-        # flag_position = self.flag.rect.center - self.all_sprites.offset - pygame.math.Vector2(0, 100)
-        # Text(f"{self.flag.timer:.2f}", flag_position, 32, (255, 255, 255)).draw(self.screen)
-
         self.crosshair_rect.center = mouse_screen_pos
         self.screen.blit(self.crosshair_img, self.crosshair_rect)
 
@@ -98,9 +95,12 @@ class RoundManager:
         # Spawn enemies
         self.spawn_enemies(player_spawn)
 
+        # Update HUD
         self.hud.flag = self.flag
+        self.hud.round = self.round_number
 
-        # self.show_message(f"ROUND {self.round_number}", 1500)
+        # New round message
+        self.show_message(f"ROUND {self.round_number}", 2000)
 
     def start_game(self) -> None:
         """
@@ -135,55 +135,59 @@ class RoundManager:
         self.hud = HUD(self.player, self.flag)
 
     def spawn_group(self, position, count):
-        pass
+        for i in range(count):
+            sx = position.x + random.randint(-100, 100)
+            sy = position.y + random.randint(-100, 100)
+
+            # 2 melee : 1 ranged
+            if random.random() < (2/3):
+                MeleeEnemy((sx, sy), (self.all_sprites, self.enemy_sprites),
+                           self.collision_sprites, self.player, self.flag, self.pathfinder)
+            else:
+                RangedEnemy((sx, sy), (self.all_sprites, self.enemy_sprites),
+                            self.collision_sprites, self.player, self.flag, self.pathfinder)
 
     def spawn_enemies(self, player_spawn):
+        # Far enough from the player
         valid_enemy_spawns = [obj for obj in self.enemy_spawn_points if
                               pygame.math.Vector2(obj.x, obj.y).distance_to(
                                   pygame.math.Vector2(player_spawn.x, player_spawn.y)) > 600]
 
-        base_count = 5 + (self.round_number * 2)
+        # Spawn 3 enemies near the flag
+        spawns_near_flag = [obj for obj in valid_enemy_spawns if
+                           pygame.math.Vector2(obj.x, obj.y).distance_to(
+                               pygame.math.Vector2(self.flag.rect.center)) < 1200]
+        selection = random.sample(spawns_near_flag, 3)
+        for spawn in selection:
+            count = random.randint(3, 5)
+            self.spawn_group(spawn, count)
+            valid_enemy_spawns.remove(spawn)
 
-        num_spawns = min(len(valid_enemy_spawns), max(3, base_count // 3))
-        selected_spawns = random.sample(valid_enemy_spawns, num_spawns)
-        enemies_per_spawn = max(1, base_count // num_spawns)
+        # Spawn extra enemies
+        for i in range(random.randint(7, 10)):
+            count = random.randint(3, 5)
+            spawn = random.choice(valid_enemy_spawns)
+            self.spawn_group(spawn, count)
+            valid_enemy_spawns.remove(spawn)
 
-        for spawn in selected_spawns:
-            for i in range(enemies_per_spawn):
-                sx = spawn.x + random.randint(-100, 100)
-                sy = spawn.y + random.randint(-100, 100)
 
-                if random.random() < 0.7:
-                    enemy = MeleeEnemy((sx, sy), (self.all_sprites, self.enemy_sprites),
-                                       self.collision_sprites, self.player, self.flag, self.pathfinder)
-                else:
-                    enemy = RangedEnemy((sx, sy), (self.all_sprites, self.enemy_sprites),
-                                        self.collision_sprites, self.player, self.flag, self.pathfinder)
+        for enemy in self.enemy_sprites:
+            enemy.calculate_difficulty(self.round_number)
 
-                enemy.health *= (1 + self.round_number * 0.15)
-
-    def show_message(self, message, duration_ms):
+    def show_message(self, message, duration_ms, color=COLOR_WHITE) -> None:
+        """
+        Shows a message on the screen for the specified duration.
+        :param message: The message to display.
+        :param duration_ms: The duration of the message in milliseconds.
+        :param color: The color of the message text.
+        """
         start_time = pygame.time.get_ticks()
-        font = pygame.font.Font(None, 72)
 
         while pygame.time.get_ticks() - start_time < duration_ms:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    return "QUIT"
-
-            overlay = pygame.Surface(self.screen.get_size())
-            overlay.fill((0, 0, 0))
-            overlay.set_alpha(180)
-            self.screen.blit(overlay, (0, 0))
-
-            text = font.render(message, True, (255, 255, 255))
-            rect = text.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2))
-            self.screen.blit(text, rect)
+            self.screen.fill(COLOR_BLACK)
+            Text(message, WINDOW_CENTER, 72, color).draw(self.screen)
 
             pygame.display.flip()
-            self.clock.tick(60)
-
-        return None
 
     def check_round_end(self) -> str | None:
         """
@@ -192,11 +196,11 @@ class RoundManager:
         """
         # Check if flag is defended or destroyed
         if self.flag.outcome == "DEFENDED" or len(self.enemy_sprites) == 0:
+            self.show_message(f"ROUND WON", 2000, color=COLOR_GREEN)
             self.start_new_round()
-            # self.flag.outcome = None
         elif self.flag.outcome == "DESTROYED":
+            self.show_message(f"ROUND LOST", 2000, color=COLOR_RED)
             self.start_new_round()
-            # self.flag.outcome = None
 
         # Check if player is dead
         if self.player.health <= 0:
@@ -206,6 +210,7 @@ class RoundManager:
                 return "GAME_OVER" # Game Lost
             else:
                 # Next round if player has lives left
+                self.show_message(f"ROUND LOST", 2000, color=COLOR_RED)
                 self.start_new_round()
 
         return "CONTINUE"
@@ -326,13 +331,14 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
                     round_manager.player.shoot(round_manager.all_sprites, round_manager.bullet_sprites)
                 if event.button == 3:
                     if random.random() < 0.5:
-                        RangedEnemy(mouse_pos, (round_manager.all_sprites, round_manager.enemy_sprites),
+                        enemy = RangedEnemy(mouse_pos, (round_manager.all_sprites, round_manager.enemy_sprites),
                                     round_manager.collision_sprites, round_manager.player,
                                     round_manager.flag, round_manager.pathfinder)
                     else:
-                        MeleeEnemy(mouse_pos, (round_manager.all_sprites, round_manager.enemy_sprites),
+                        enemy = MeleeEnemy(mouse_pos, (round_manager.all_sprites, round_manager.enemy_sprites),
                                    round_manager.collision_sprites, round_manager.player,
                                    round_manager.flag, round_manager.pathfinder)
+                    enemy.calculate_difficulty(round_manager.round_number)
 
         if paused:
             next_state = pause_menu(screen, clock)

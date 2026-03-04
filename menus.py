@@ -76,7 +76,14 @@ class Text:
             self.text_rect.topleft = position
         elif anchor == "midleft":
             self.text_rect.midleft = position
-
+        elif anchor == "topright":
+            self.text_rect.topright = position
+        elif anchor == "midright":
+            self.text_rect.midright = position
+        elif anchor == "bottomleft":
+            self.text_rect.bottomleft = position
+        elif anchor == "bottomright":
+            self.text_rect.bottomright = position
 
     def draw(self, screen: pygame.Surface) -> None:
         """Renders the text on the given surface."""
@@ -98,6 +105,8 @@ class HUD:
         self.compass_icon: pygame.Surface = AssetManager.get_image("assets/images/compass_arrow.png")
         self.compass_icon = pygame.transform.scale(self.compass_icon, (30, 30))
 
+        self.round = 1
+
     def draw(self, screen: pygame.Surface) -> None:
         """Draws the HUD on the given surface."""
         self.health_bar(screen)
@@ -106,6 +115,7 @@ class HUD:
         self.lives_counter(screen)
         self.reload_progress(screen)
         self.flag_compass(screen)
+        self.round_counter(screen)
 
     def health_bar(self, screen: pygame.Surface) -> None:
         """Draws the health bar on the given surface."""
@@ -198,6 +208,12 @@ class HUD:
         rotated_rect = rotated_image.get_rect(center=arrow_pos)
 
         screen.blit(rotated_image, rotated_rect)
+
+    def round_counter(self, screen: pygame.Surface) -> None:
+        """Draws the round counter on the given surface."""
+        round_text = Text(f"Round: {self.round}", (WINDOW_WIDTH - 25, 35),
+                         font_size=48, colour=COLOR_BLUE, anchor="midright")
+        round_text.draw(screen)
 
 def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     """

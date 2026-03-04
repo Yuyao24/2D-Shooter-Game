@@ -40,6 +40,7 @@ class BaseEnemy(pygame.sprite.Sprite):
         self.health: float = 100.0
 
         # Attacking
+        self.damage: float = 10.0
         self.attack_range: int = 64
 
     def update(self, dt: float) -> None:
@@ -126,6 +127,18 @@ class BaseEnemy(pygame.sprite.Sprite):
         return pygame.math.Vector2(self.hitbox.center).distance_to(
             pygame.math.Vector2(self.target.hitbox.center)
         )
+
+    def calculate_difficulty(self, round_number) -> None:
+        """
+        Scales difficulty based on round number.
+        :param round_number: The current round number.
+        """
+        health_multiplier = 0.1 * (round_number - 1) * random.uniform(0.8, 1.2)  # +10% Each round
+        self.health *= (1 + health_multiplier)
+
+        damage_multiplier = 0.2 * ((round_number - 1) ** 0.7) * random.uniform(0.8, 1.2)  # Diminishing scaling
+        self.damage *= (1 + damage_multiplier)
+
 
 class MeleeEnemy(BaseEnemy):
     """A stronger enemy that can deal damage to the player on contact."""
