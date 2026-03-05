@@ -1,5 +1,4 @@
 import random
-import pygame
 from pytmx import load_pygame
 from settings import *
 from map import GroundTile, SmallSprite, TallSprite, RectSprite, Pathfinder
@@ -7,6 +6,7 @@ from player import Player
 from enemy import MeleeEnemy, RangedEnemy
 from menus import pause_menu, Text, HUD
 from flag import Flag
+from stats_manager import StatsManager
 
 class RoundManager:
     """
@@ -15,6 +15,7 @@ class RoundManager:
     def __init__(self, screen, clock) -> None:
         self.screen = screen
         self.clock = clock
+        self.stats_manager = StatsManager()
 
         # Round tracking
         self.round_number: int = 1
@@ -51,7 +52,7 @@ class RoundManager:
         and checks if the round has ended.
         """
         self.all_sprites.update(dt)
-        damage_enemies(self.bullet_sprites, self.enemy_sprites)
+        self.damage_enemies()
         return self.check_round_end()
 
     def draw(self, mouse_screen_pos) -> None:
@@ -64,6 +65,8 @@ class RoundManager:
         self.all_sprites.draw_with_offset(self.player.rect.center)
         self.hud.draw(self.screen)
 
+        Text(f"Score: {self.stats_manager.score}", (50, 315), 64, COLOR_WHITE, anchor="midleft").draw(self.screen)
+
         self.crosshair_rect.center = mouse_screen_pos
         self.screen.blit(self.crosshair_img, self.crosshair_rect)
 
@@ -75,6 +78,7 @@ class RoundManager:
         """
         # Increment round number
         self.round_number += 1
+        self.stats_manager.update_rounds()
 
         # Kill all enemies and bullets
         for sprite in list(self.enemy_sprites):
@@ -188,6 +192,7 @@ class RoundManager:
             Text(message, WINDOW_CENTER, 72, color).draw(self.screen)
 
             pygame.display.flip()
+            self.clock.tick(60)
 
     def check_round_end(self) -> str | None:
         """
@@ -196,6 +201,7 @@ class RoundManager:
         """
         # Check if flag is defended or destroyed
         if self.flag.outcome == "DEFENDED" or len(self.enemy_sprites) == 0:
+            self.stats_manager.update_score(1000)
             self.show_message(f"ROUND WON", 2000, color=COLOR_GREEN)
             self.start_new_round()
         elif self.flag.outcome == "DESTROYED":
@@ -207,6 +213,7 @@ class RoundManager:
             self.player.lives -= 1
             # Check if player has lives left
             if self.player.lives <= 0:
+                self.show_message(f"GAME OVER", 2000, color=COLOR_RED)
                 return "GAME_OVER" # Game Lost
             else:
                 # Next round if player has lives left
@@ -226,7 +233,27 @@ class RoundManager:
                                  pygame.math.Vector2(player_spawn.x, player_spawn.y)) > 2500]
         flag_spawn = random.choice(valid_flag_spawns)
         self.flag = Flag((flag_spawn.x, flag_spawn.y),
-                         (self.all_sprites,), self.player)
+                         (self.all_sprites,), self.player, self.stats_manager)
+
+    def damage_enemies(self) -> None:
+        """
+        Detects collisions between bullets and enemies, and deals damage to them.
+        Kills enemies if health drops to 0.
+        """
+        # Collision detection between bullets and enemies
+        hits = pygame.sprite.groupcollide(self.bullet_sprites, self.enemy_sprites,
+                                          True, False,
+                                          collided=bullet_enemy_mask_collide)
+
+        # Damage enemies and kill them if necessary
+        for bullet, enemies_hit in hits.items():
+            for enemy in enemies_hit:
+                died = enemy.take_damage(bullet.damage)
+                enemy.active = True
+                if died:
+                    enemy.kill()
+                    self.stats_manager.update_kills()
+                    self.stats_manager.update_score(50)
 
 def load_map(all_sprites: pygame.sprite.Group, collision_sprites: pygame.sprite.Group):
     """
@@ -252,27 +279,6 @@ def load_map(all_sprites: pygame.sprite.Group, collision_sprites: pygame.sprite.
                    (all_sprites, collision_sprites))
 
     return map_tmx
-
-def damage_enemies(bullet_sprites, enemy_sprites) -> None:
-    """
-    Detects collisions between bullets and enemies, and deals damage to them.
-    Kills enemies if health drops to 0.
-
-    :param bullet_sprites: Group of bullet sprite objects.
-    :param enemy_sprites: Group of enemy sprite objects.
-    """
-    # Collision detection between bullets and enemies
-    hits = pygame.sprite.groupcollide(bullet_sprites, enemy_sprites,
-                                      True, False,
-                                      collided=bullet_enemy_mask_collide)
-
-    # Damage enemies and kill them if necessary
-    for bullet, enemies_hit in hits.items():
-        for enemy in enemies_hit:
-            died = enemy.take_damage(bullet.damage)
-            enemy.active = True
-            if died:
-                enemy.kill()
 
 def bullet_enemy_mask_collide(bullet: pygame.sprite.Sprite, enemy: pygame.sprite.Sprite) -> bool:
     """
@@ -311,7 +317,7 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return "QUIT"
+                return "QUIT", round_manager.stats_manager.get_stats()
 
             if event.type == pygame.MOUSEMOTION:
                 mouse_screen_pos.update(event.pos)
@@ -329,16 +335,6 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
                 mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + round_manager.all_sprites.offset
                 if event.button == 1:
                     round_manager.player.shoot(round_manager.all_sprites, round_manager.bullet_sprites)
-                if event.button == 3:
-                    if random.random() < 0.5:
-                        enemy = RangedEnemy(mouse_pos, (round_manager.all_sprites, round_manager.enemy_sprites),
-                                    round_manager.collision_sprites, round_manager.player,
-                                    round_manager.flag, round_manager.pathfinder)
-                    else:
-                        enemy = MeleeEnemy(mouse_pos, (round_manager.all_sprites, round_manager.enemy_sprites),
-                                   round_manager.collision_sprites, round_manager.player,
-                                   round_manager.flag, round_manager.pathfinder)
-                    enemy.calculate_difficulty(round_manager.round_number)
 
         if paused:
             next_state = pause_menu(screen, clock)
@@ -347,13 +343,13 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
                 mouse_screen_pos.update(pygame.mouse.get_pos())
                 pygame.mouse.set_visible(False)
             elif next_state in {"MAIN_MENU", "QUIT"}:
-                return next_state
+                return next_state, round_manager.stats_manager.get_stats()
             continue
 
         next_state = round_manager.update(dt)
 
         if next_state == "GAME_OVER":
-            return "GAME_OVER" # Go to game over screen
+            return "GAME_OVER", round_manager.stats_manager.get_stats() # Go to game over screen
         # If "CONTINUE", continue with the next round
         
         round_manager.draw(mouse_screen_pos)

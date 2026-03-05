@@ -334,3 +334,66 @@ def pause_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
         pygame.display.flip() # Update display
         clock.tick(60)
 
+def game_over_menu(screen: pygame.Surface, clock: pygame.time.Clock, game_over_stats: dict) -> str:
+    """
+    Displays the game over menu and handles user interaction.
+
+    :return: The next game state ("MAIN_MENU").
+    """
+
+    pygame.mouse.set_visible(True)
+
+    # Game over text
+    game_over_text = Text("Game Over", (WINDOW_WIDTH // 2, 100),
+                          font_size=100, colour=COLOR_RED)
+
+    # Game over stats
+    score_text = Text(f"Score: {game_over_stats['Score']}", (WINDOW_WIDTH // 2, 185),
+                      font_size=85, colour=COLOR_DARK_BLUE)
+    round_text = Text(f"Rounds Completed: {game_over_stats['Rounds']}", (WINDOW_WIDTH // 2, 270),
+                      font_size=48, colour=COLOR_DARK_BLUE)
+    kills_text = Text(f"Enemies Killed: {game_over_stats['Kills']}", (WINDOW_WIDTH // 2, 320),
+                      font_size=48, colour=COLOR_DARK_BLUE)
+    flag_text = Text(f"Flags Planted: {game_over_stats['Flags']}", (WINDOW_WIDTH // 2, 370),
+                     font_size=48, colour=COLOR_DARK_BLUE)
+
+    # Update high score if needed
+    score = game_over_stats['Score']
+    with open("game_save/highscore.txt", "r") as score_file:
+        high_score = int(score_file.read())
+    if score > high_score:
+        with open("game_save/highscore.txt", "w") as score_file:
+            score_file.write(str(score))
+
+    # Create buttons
+    main_menu_button = Button("Main Menu", (WINDOW_WIDTH // 2, 600), 300, 120)
+    buttons = [main_menu_button]
+
+    while True:
+        for event in pygame.event.get(): # Event loop
+            if event.type == pygame.QUIT:
+                return "QUIT"
+            if main_menu_button.is_clicked(event):
+                return "MAIN_MENU"  # Change game state to MAIN MENU
+
+        # Update cursor
+        if any(button.is_hovered() for button in buttons):
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+        else:
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+
+        screen.fill(COLOR_WHITE)  # Clear screen with a white background
+
+        # Render game over text
+        game_over_text.draw(screen)
+        score_text.draw(screen)
+        round_text.draw(screen)
+        kills_text.draw(screen)
+        flag_text.draw(screen)
+
+        # Render buttons
+        for button in buttons:
+            button.draw(screen)
+
+        pygame.display.flip() # Update display
+        clock.tick(60)

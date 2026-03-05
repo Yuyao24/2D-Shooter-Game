@@ -1,6 +1,7 @@
 import pygame
 import math
 from settings import AssetManager, COLOR_RED, COLOR_BLUE
+from stats_manager import StatsManager
 from player import Player
 
 
@@ -10,7 +11,7 @@ class Flag(pygame.sprite.Sprite):
     Contains both flag site and planted flag.
     """
     def __init__(self, position: tuple[float, float],
-                 groups: pygame.sprite.AbstractGroup, player: Player) -> None:
+                 groups: pygame.sprite.AbstractGroup, player: Player, stats_manager: StatsManager) -> None:
         super().__init__(groups)
         # Unplanted image - Unrendered Surface
         self.radius: int = 150
@@ -44,8 +45,9 @@ class Flag(pygame.sprite.Sprite):
         # Outcome
         self.outcome: str | None = None  # "DEFENDED" or "DESTROYED"
 
-        # Player reference
+        # References
         self.player: Player = player
+        self.stats_manager: StatsManager = stats_manager
 
     def update(self, dt: float) -> None:
         """Updates flag state."""
@@ -95,6 +97,8 @@ class Flag(pygame.sprite.Sprite):
     def plant_flag(self) -> None:
         """Transitions to planted state with flag centered on site."""
         self.is_planted = True
+        self.stats_manager.update_flags()
+        self.stats_manager.update_score(500)
         self.image = self.planted_image
         self.rect = self.image.get_frect(midbottom=self.position)
         self.hitbox = self.rect.inflate(-29, -26)
