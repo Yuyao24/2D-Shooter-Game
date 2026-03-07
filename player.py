@@ -94,6 +94,10 @@ class Player(pygame.sprite.Sprite):
         self.gun.ammo = self.gun.max_ammo
         self.gun.is_reloading = False
 
+    def update_money(self, amount: int) -> None:
+        """Adds or subtracts money from the player's account."""
+        self.money += amount
+
 class Gun(pygame.sprite.Sprite):
     """Represents the weapon held by the player."""
     def __init__(self, player: Player, groups: pygame.sprite.AbstractGroup | list[pygame.sprite.AbstractGroup]) -> None:

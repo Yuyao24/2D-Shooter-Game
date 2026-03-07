@@ -14,7 +14,7 @@ class Game:
         self.clock: pygame.time.Clock = pygame.time.Clock()  # Set up clock timer
 
         self.running: bool = True # Game loop flag
-        self.game_state: str = "PLAYING"  # Initial game state
+        self.game_state: str = "MAIN_MENU"  # Initial game state
                                             # Possible states: MAIN_MENU, PLAYING, PAUSED, UPGRADING, GAME_OVER
         self.game_over_stats: dict = {}  # To store stats for game over screen
 

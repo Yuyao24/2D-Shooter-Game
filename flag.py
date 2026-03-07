@@ -97,6 +97,7 @@ class Flag(pygame.sprite.Sprite):
     def plant_flag(self) -> None:
         """Transitions to planted state with flag centered on site."""
         self.is_planted = True
+        self.player.update_money(300)
         self.stats_manager.update_flags()
         self.stats_manager.update_score(500)
         self.image = self.planted_image

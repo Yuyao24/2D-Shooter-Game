@@ -1,7 +1,7 @@
 class StatsManager:
     """Manages player statistics such as score, kills, rounds completed, etc."""
     def __init__(self):
-        self.score: int = 3950
+        self.score: int = 0
         self.enemies_killed: int = 0
         self.rounds_completed: int = 0
         self.flags_planted: int = 0

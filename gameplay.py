@@ -65,8 +65,6 @@ class RoundManager:
         self.all_sprites.draw_with_offset(self.player.rect.center)
         self.hud.draw(self.screen)
 
-        Text(f"Score: {self.stats_manager.score}", (50, 315), 64, COLOR_WHITE, anchor="midleft").draw(self.screen)
-
         self.crosshair_rect.center = mouse_screen_pos
         self.screen.blit(self.crosshair_img, self.crosshair_rect)
 
@@ -200,12 +198,20 @@ class RoundManager:
         :return: "CONTINUE", "GAME_OVER", or None
         """
         # Check if flag is defended or destroyed
-        if self.flag.outcome == "DEFENDED" or len(self.enemy_sprites) == 0:
+        if self.flag.outcome == "DEFENDED":
+            self.player.update_money(500)
+            self.player.update_money(300)
             self.stats_manager.update_score(1000)
             self.show_message(f"ROUND WON", 2000, color=COLOR_GREEN)
             self.start_new_round()
         elif self.flag.outcome == "DESTROYED":
+            self.player.update_money(300)
             self.show_message(f"ROUND LOST", 2000, color=COLOR_RED)
+            self.start_new_round()
+
+        if len(self.enemy_sprites) == 0 and self.flag.outcome is None:
+            self.player.update_money(300)
+            self.show_message(f"ROUND WON", 2000, color=COLOR_GREEN)
             self.start_new_round()
 
         # Check if player is dead
@@ -218,6 +224,8 @@ class RoundManager:
             else:
                 # Next round if player has lives left
                 self.show_message(f"ROUND LOST", 2000, color=COLOR_RED)
+                if self.flag.is_planted:
+                    self.player.update_money(300)
                 self.start_new_round()
 
         return "CONTINUE"
@@ -252,6 +260,7 @@ class RoundManager:
                 enemy.active = True
                 if died:
                     enemy.kill()
+                    self.player.update_money(10)
                     self.stats_manager.update_kills()
                     self.stats_manager.update_score(50)
 
@@ -327,9 +336,6 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
                     paused = True
                 if event.key == pygame.K_r:
                     round_manager.player.gun.reload()
-                if event.key == pygame.K_f:
-                    round_manager.player.rect.center = round_manager.flag.rect.center
-                    round_manager.player.hitbox.midbottom = round_manager.player.rect.midbottom
 
             if event.type == pygame.MOUSEBUTTONDOWN and not paused:
                 mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + round_manager.all_sprites.offset
