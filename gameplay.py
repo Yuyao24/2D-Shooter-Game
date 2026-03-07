@@ -136,6 +136,9 @@ class RoundManager:
         # HUD
         self.hud = HUD(self.player, self.flag)
 
+        # Show start message
+        self.show_message(f"ROUND {self.round_number}", 2000)
+
     def spawn_group(self, position, count):
         for i in range(count):
             sx = position.x + random.randint(-100, 100)
@@ -186,6 +189,9 @@ class RoundManager:
         start_time = pygame.time.get_ticks()
 
         while pygame.time.get_ticks() - start_time < duration_ms:
+            for event in pygame.event.get():
+                continue
+
             self.screen.fill(COLOR_BLACK)
             Text(message, WINDOW_CENTER, 72, color).draw(self.screen)
 

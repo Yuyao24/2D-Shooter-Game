@@ -36,6 +36,11 @@ class BaseEnemy(pygame.sprite.Sprite):
         self.path_timer: int = pygame.time.get_ticks() + random.randint(0, 500)
         self.last_target_tile: tuple[int, int] | None = None
 
+        self.flag_response_time: int | None = None
+        self.flag_target_offset: pygame.Vector2 = pygame.Vector2(
+            random.randint(-96, 96), random.randint(-96, 96)
+        )
+
         # Health
         self.health: float = 100.0
 
@@ -70,8 +75,8 @@ class BaseEnemy(pygame.sprite.Sprite):
 
         target_pos = pygame.math.Vector2(self.target.hitbox.center)
 
-        random_offset = pygame.math.Vector2(random.randint(-64, 64), random.randint(-64, 64))
-        target_pos = target_pos + random_offset
+        if self.target is self.flag:
+            target_pos += self.flag_target_offset
 
         target_tile = (int(target_pos.x // TILE_SIZE), int(target_pos.y // TILE_SIZE))
 
@@ -82,7 +87,7 @@ class BaseEnemy(pygame.sprite.Sprite):
 
             self.last_target_tile = target_tile
 
-        self.path_timer = current_time + 500 + random.randint(-100, 100)
+        self.path_timer = current_time + 700 + random.randint(0, 300)
 
     def handle_movement(self, dt: float) -> None:
         """Moves the enemy along the current path."""
