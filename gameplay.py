@@ -7,6 +7,7 @@ from enemy import MeleeEnemy, RangedEnemy
 from menus import pause_menu, Text, HUD
 from flag import Flag
 from stats_manager import StatsManager
+from upgrades import upgrade_menu
 
 class RoundManager:
     """
@@ -74,6 +75,12 @@ class RoundManager:
         """
         Initializes a new round by resetting all game entities.
         """
+        # Open upgrade menu
+        next_state = upgrade_menu(self.screen, self.clock, self.player)
+        if next_state == "MAIN_MENU":
+            return "MAIN_MENU"
+        # if CONTINUE, continue with the next round
+
         # Increment round number
         self.round_number += 1
         self.stats_manager.update_rounds()
@@ -103,6 +110,7 @@ class RoundManager:
 
         # New round message
         self.show_message(f"ROUND {self.round_number}", 2000)
+        return None
 
     def start_game(self) -> None:
         """
@@ -169,7 +177,7 @@ class RoundManager:
             valid_enemy_spawns.remove(spawn)
 
         # Spawn extra enemies
-        for i in range(random.randint(7, 10)):
+        for i in range(random.randint(4, 7)):
             count = random.randint(3, 5)
             spawn = random.choice(valid_enemy_spawns)
             self.spawn_group(spawn, count)
@@ -190,7 +198,8 @@ class RoundManager:
 
         while pygame.time.get_ticks() - start_time < duration_ms:
             for event in pygame.event.get():
-                continue
+                if event.type == pygame.QUIT:
+                    return
 
             self.screen.fill(COLOR_BLACK)
             Text(message, WINDOW_CENTER, 72, color).draw(self.screen)
@@ -205,20 +214,19 @@ class RoundManager:
         """
         # Check if flag is defended or destroyed
         if self.flag.outcome == "DEFENDED":
-            self.player.update_money(500)
-            self.player.update_money(300)
+            self.player.update_money(800)
             self.stats_manager.update_score(1000)
             self.show_message(f"ROUND WON", 2000, color=COLOR_GREEN)
-            self.start_new_round()
+            return self.start_new_round()
         elif self.flag.outcome == "DESTROYED":
             self.player.update_money(300)
             self.show_message(f"ROUND LOST", 2000, color=COLOR_RED)
-            self.start_new_round()
+            return self.start_new_round()
 
         if len(self.enemy_sprites) == 0 and self.flag.outcome is None:
             self.player.update_money(300)
             self.show_message(f"ROUND WON", 2000, color=COLOR_GREEN)
-            self.start_new_round()
+            return self.start_new_round()
 
         # Check if player is dead
         if self.player.health <= 0:
@@ -232,7 +240,7 @@ class RoundManager:
                 self.show_message(f"ROUND LOST", 2000, color=COLOR_RED)
                 if self.flag.is_planted:
                     self.player.update_money(300)
-                self.start_new_round()
+                return self.start_new_round()
 
         return "CONTINUE"
 
@@ -344,7 +352,6 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
                     round_manager.player.gun.reload()
 
             if event.type == pygame.MOUSEBUTTONDOWN and not paused:
-                mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + round_manager.all_sprites.offset
                 if event.button == 1:
                     round_manager.player.shoot(round_manager.all_sprites, round_manager.bullet_sprites)
 
@@ -358,10 +365,13 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
                 return next_state, round_manager.stats_manager.get_stats()
             continue
 
+        # Check next state
         next_state = round_manager.update(dt)
 
         if next_state == "GAME_OVER":
             return "GAME_OVER", round_manager.stats_manager.get_stats() # Go to game over screen
+        if next_state == "MAIN_MENU":
+            return "MAIN_MENU", round_manager.stats_manager.get_stats() # Go to main menu screen
         # If "CONTINUE", continue with the next round
         
         round_manager.draw(mouse_screen_pos)

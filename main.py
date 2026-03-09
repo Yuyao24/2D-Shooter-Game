@@ -15,7 +15,7 @@ class Game:
 
         self.running: bool = True # Game loop flag
         self.game_state: str = "MAIN_MENU"  # Initial game state
-                                            # Possible states: MAIN_MENU, PLAYING, PAUSED, UPGRADING, GAME_OVER
+                                            # Possible states: MAIN_MENU, PLAYING, GAME_OVER, QUIT
         self.game_over_stats: dict = {}  # To store stats for game over screen
 
     def run(self) -> None:
@@ -25,14 +25,10 @@ class Game:
                 self.game_state = main_menu(self.screen, self.clock)
             elif self.game_state == "PLAYING":
                 self.game_state, self.game_over_stats = gameplay_loop(self.screen, self.clock)
-            elif self.game_state == "UPGRADING":
-                pass
             elif self.game_state == "GAME_OVER":
                 self.game_state = game_over_menu(self.screen, self.clock, self.game_over_stats)
             elif self.game_state == "QUIT":
                 self.running = False
-            elif self.game_state == "PAUSED":
-                self.game_state = pause_menu(self.screen, self.clock)
 
         pygame.quit()  # Quit Pygame
         sys.exit()  # Prevents Pygame quit error
