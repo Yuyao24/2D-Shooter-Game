@@ -225,6 +225,8 @@ class RoundManager:
 
         if len(self.enemy_sprites) == 0 and self.flag.outcome is None:
             self.player.update_money(300)
+            if self.flag.is_planted:
+                self.stats_manager.update_score(1000)
             self.show_message(f"ROUND WON", 2000, color=COLOR_GREEN)
             return self.start_new_round()
 
@@ -262,21 +264,82 @@ class RoundManager:
         Detects collisions between bullets and enemies, and deals damage to them.
         Kills enemies if health drops to 0.
         """
+        import random
+
         # Collision detection between bullets and enemies
         hits = pygame.sprite.groupcollide(self.bullet_sprites, self.enemy_sprites,
-                                          True, False,
+                                          False, False,
                                           collided=bullet_enemy_mask_collide)
 
         # Damage enemies and kill them if necessary
         for bullet, enemies_hit in hits.items():
+            bullet_hit_first_enemy = False
             for enemy in enemies_hit:
-                died = enemy.take_damage(bullet.damage)
+                # Skip if already hit by this bullet (piercing)
+                if id(enemy) in bullet.enemies_hit:
+                    continue
+
+                # Check if bullet has already hit max enemies allowed by piercing
+                # max_enemies = 1 base hit + number of piercing levels
+                max_enemies_allowed =  bullet.piercing
+                if len(bullet.enemies_hit) >= max_enemies_allowed:
+                    # Already hit max enemies, delete bullet and stop processing
+                    bullet.kill()
+                    break
+
+                # Add this enemy to the hit set
+                bullet.enemies_hit.add(id(enemy))
+
+                # Apply damage
+                damage = bullet.damage
+
+                # Check for instant kill (Lucky Shot upgrade)
+                if random.random() < bullet.insta_kill_chance:
+                    died = True
+                    enemy.health = 0
+                # Check for trinity shot (Holy Trinity upgrade - last 3 shots)
+                elif bullet.is_trinity_shot:
+                    died = True
+                    enemy.health = 0
+                else:
+                    died = enemy.take_damage(damage)
+
                 enemy.active = True
+
                 if died:
                     enemy.kill()
                     self.player.update_money(10)
+                    # Apply life steal upgrade
+                    if self.player.life_steal > 0:
+                        self.player.health = min(self.player.health + self.player.life_steal,
+                                                 self.player.max_health)
                     self.stats_manager.update_kills()
                     self.stats_manager.update_score(50)
+
+                # Mark that the bullet hit at least one enemy for piercing logic
+                bullet_hit_first_enemy = True
+
+            # Apply explosion damage on first enemy hit
+            if bullet.area_damage > 0 and not bullet.has_exploded and bullet_hit_first_enemy:
+                bullet.has_exploded = True
+                explosion_radius = 100
+                explosion_damage = bullet.damage * bullet.area_damage
+                for other_enemy in self.enemy_sprites:
+                    if id(other_enemy) not in bullet.enemies_hit and (
+                                pygame.math.Vector2(bullet.rect.center).
+                                        distance_to(other_enemy.rect.center)
+                                            <= explosion_radius):
+                        other_enemy.take_damage(explosion_damage)
+                        other_enemy.active = True
+                        if other_enemy.health <= 0:
+                            other_enemy.kill()
+                            self.player.update_money(10)
+                            if self.player.life_steal > 0:
+                                self.player.health = min(self.player.health + self.player.life_steal,
+                                                         self.player.max_health)
+                            self.stats_manager.update_kills()
+                            self.stats_manager.update_score(50)
+
 
 def load_map(all_sprites: pygame.sprite.Group, collision_sprites: pygame.sprite.Group):
     """
@@ -334,6 +397,7 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
 
     mouse_screen_pos = pygame.math.Vector2(pygame.mouse.get_pos())
     paused = False
+    mouse_button_held = False
 
     while True:
         dt = clock.tick() / 1000
@@ -353,7 +417,16 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
 
             if event.type == pygame.MOUSEBUTTONDOWN and not paused:
                 if event.button == 1:
+                    mouse_button_held = True
                     round_manager.player.shoot(round_manager.all_sprites, round_manager.bullet_sprites)
+
+            if event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:
+                    mouse_button_held = False
+
+        # Auto-shoot logic when mouse button held
+        if mouse_button_held and not paused and round_manager.player.gun.auto_shoot:
+            round_manager.player.shoot(round_manager.all_sprites, round_manager.bullet_sprites)
 
         if paused:
             next_state = pause_menu(screen, clock)

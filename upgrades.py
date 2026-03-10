@@ -75,9 +75,13 @@ class UpgradeCard:
         cost_text.draw(screen)
 
         # Description text
-        desc_text = Text(self.upgrade.description, (self.position[0], self.position[1] + 10),
-                         font_size=24, colour=COLOR_BLACK)
-        desc_text.draw(screen)
+        desc_lines = self._wrap_text(self.upgrade.description, self.width - 30)
+        desc_y = self.position[1] - 20
+        for line in desc_lines:
+            desc_line = Text(line, (self.position[0], desc_y),
+                             font_size=24, colour=COLOR_BLACK)
+            desc_line.draw(screen)
+            desc_y += 28
 
     def is_clicked(self, event) -> bool:
         """Checks if the card was clicked."""
@@ -91,15 +95,60 @@ class UpgradeCard:
         """Checks if mouse is hovering over the card or button."""
         return self.rect.collidepoint(pygame.mouse.get_pos())
 
-def select_random_upgrades(all_upgrades) -> list[Upgrade]:
-    """Selects 3 random upgrades with weighted probabilities."""
+    # noinspection PyMethodMayBeStatic
+    def _wrap_text(self, text: str, max_width: int) -> list[str]:
+        """Wraps text to fit within max_width, splitting on commas and spaces."""
+        # First split on commas and capitalize each part
+        parts = [part.strip().capitalize() for part in text.split(',')]
 
-    available = all_upgrades
+        lines = []
+        font = pygame.font.Font(None, 24)
+
+        for part in parts:
+            words = part.split()
+            current_line = ""
+
+            for word in words:
+                test = current_line + " " + word if current_line else word
+                if font.size(test)[0] < max_width:
+                    current_line = test
+                else:
+                    if current_line:
+                        lines.append(current_line)
+                    current_line = word
+
+            if current_line:
+                lines.append(current_line)
+
+        return lines[:4]  # Max 4 lines
+
+def select_random_upgrades(all_upgrades, player: Player) -> list[Upgrade]:
+    """Selects 3 random upgrades with weighted probabilities, filtering out unavailable toggles."""
+
+    # Filter unavailable upgrades
+    available = []
+    for upgrade in all_upgrades:
+        # Check toggle upgrades
+        if upgrade.name == "Holy Trinity" and player.has_trinity:
+            continue
+        if upgrade.name == "Adrenaline Rush" and player.has_adrenaline:
+            continue
+        if upgrade.name == "Auto Clicker" and player.has_auto_shoot:
+            continue
+        # Check Extra Life - only show if player doesn't have 5 lives
+        if upgrade.name == "Extra Life" and player.lives >= 5:
+            continue
+
+        available.append(upgrade)
+
+    # Need at least 3 upgrades available
+    if len(available) < 3:
+        return available  # Return what we have
+
     selected = []
-
     for i in range(3):
-        weights = [60 if u.tier == 1  # Common x60
-                   else 30 if u.tier == 2  # Rare x30
+        weights = [70 if u.tier == 1  # Common x75
+                   else 20 if u.tier == 2  # Rare x25
                    else 10 for u in available]  # Legendary x10
         choice = random.choices(available, weights=weights, k=1)[0]
         selected.append(choice)
@@ -121,7 +170,7 @@ def create_upgrade_list() -> list[Upgrade]:
             "Damage Boost",
             "Damage +10%",
             600, 1,
-            lambda p: setattr(p.gun, 'damage', p.damage * 1.1)
+            lambda p: setattr(p.gun, 'damage', p.gun.damage * 1.1)
         ),
         Upgrade(
             "Fire Rate Boost",
@@ -163,7 +212,7 @@ def create_upgrade_list() -> list[Upgrade]:
             "Magazine Upgrade",
             "Magazine size +5",
             550, 1,
-            lambda p: setattr(p.gun, 'magazine_size', p.gun.magazine_size + 5)
+            lambda p: setattr(p.gun, 'max_ammo', p.gun.max_ammo + 5)
         ),
         Upgrade(
             "Gold Gold Gold",
@@ -179,14 +228,14 @@ def create_upgrade_list() -> list[Upgrade]:
         ),
         Upgrade(
             "Tank",
-            "Max health +50%, damage -20%",
+            "Max health +50%, Damage -20%",
             1200, 2,
             lambda p: (setattr(p, 'max_health', p.max_health * 1.5),
                        setattr(p.gun, 'damage', p.gun.damage * 0.8))
         ),
         Upgrade(
             "Berserker",
-            "Damage +50%, max health -25%",
+            "Damage +50%, Max health -25%",
             1500, 2,
             lambda p: (setattr(p.gun, 'damage', p.gun.damage * 1.5),
                        setattr(p, 'max_health', p.max_health * 0.75))
@@ -218,34 +267,38 @@ def create_upgrade_list() -> list[Upgrade]:
         Upgrade(
             "Explosive Rounds",
             "Bullets deal +20% area damage",
-            2500, 3,
+            4200, 3,
             lambda p: setattr(p.gun, 'area_damage', p.gun.area_damage + 0.2)
         ),
         Upgrade(
             "Extra Life",
             "Gain +1 life",
             3000, 3,
-            lambda p: setattr(p, 'lives', p.lives + 1)
+            lambda p: (setattr(p, 'lives', p.lives + 1))
         ),
         Upgrade(
             "Holy Trinity",
-            "Last 3 shots in magazine are one-shot kills",
+            "Last 3 shots in magazine are one-shot kills, -25 ammo capacity",
             3500, 3,
-            lambda p: setattr(p.gun, 'trinity', True),
+            lambda p: (setattr(p.gun, 'trinity', True),
+                       setattr(p, 'has_trinity', True),
+                       setattr(p.gun, 'max_ammo', p.gun.max_ammo - 25))
         ),
         Upgrade(
             "Adrenaline Rush",
             "Movement speed +25% when below 30% health",
             2200, 3,
-            lambda p: setattr(p, 'adrenaline', True)
+            lambda p: (setattr(p, 'adrenaline', True),
+                       setattr(p, 'has_adrenaline', True))
         ),
         Upgrade(
             "Auto Clicker",
-            "Automatically shoots when mouse button held down +50% fire rate",
+            "Automatically shoots when mouse button held down, +50% fire rate",
             3000, 3,
             lambda p: (setattr(p.gun, 'auto_shoot', True),
-                       setattr(p.gun, 'fire_rate', p.gun.fire_rate * 0.5)
-        ))
+                       setattr(p.gun, 'fire_rate', p.gun.fire_rate * 0.5),
+                       setattr(p, 'has_auto_shoot', True))
+        )
         ]
 
     return upgrades
@@ -255,7 +308,7 @@ def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock, player: Playe
     pygame.mouse.set_visible(True)
 
     upgrades = create_upgrade_list()
-    offered_upgrades = select_random_upgrades(upgrades)
+    offered_upgrades = select_random_upgrades(upgrades, player)
 
     card_spacing = 350
     start_x = WINDOW_WIDTH // 2 - card_spacing

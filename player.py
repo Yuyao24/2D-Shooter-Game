@@ -31,9 +31,20 @@ class Player(pygame.sprite.Sprite):
         self.health: float = 100.0
         self.max_health: float = 100.0
         self.lives: int = 5
+        self.damage_reduction: float = 1.0
 
         # Money
-        self.money: int = 0
+        self.money: int = 5000
+        self.money_mult: float = 1.0
+
+        # Upgrade flags (toggles - only purchasable once)
+        self.has_trinity: bool = False
+        self.has_adrenaline: bool = False
+        self.has_auto_shoot: bool = False
+        self.adrenaline: bool = False
+
+        # Upgrade stats
+        self.life_steal: int = 0
 
     def update(self, dt: float) -> None:
         """Updates the player state once per frame."""
@@ -51,10 +62,15 @@ class Player(pygame.sprite.Sprite):
         if self.direction.length() > 0:
             self.direction = self.direction.normalize()
 
+        # Apply adrenaline speed boost when below 30% health
+        current_speed = self.speed
+        if self.adrenaline and self.health < self.max_health * 0.3:
+            current_speed = self.speed * 1.25
+
         # Update position using delta time
-        self.hitbox.x += self.direction.x * self.speed * dt
+        self.hitbox.x += self.direction.x * current_speed * dt
         self.collide("horizontal")
-        self.hitbox.y += self.direction.y * self.speed * dt
+        self.hitbox.y += self.direction.y * current_speed * dt
         self.collide("vertical")
         self.rect.midbottom = self.hitbox.midbottom
 
@@ -74,8 +90,9 @@ class Player(pygame.sprite.Sprite):
         self.gun.shoot(self, all_sprites, bullets, self.collision_sprites)
 
     def take_damage(self, amount: float) -> None:
-        """Reduces the player's health by the given amount."""
-        self.health -= amount
+        """Reduces the player's health by the given amount, applying damage reduction."""
+        # Apply damage reduction from upgrades
+        self.health -= amount * self.damage_reduction
 
     def reset(self, new_position: tuple[float, float]) -> None:
         """
@@ -96,6 +113,8 @@ class Player(pygame.sprite.Sprite):
 
     def update_money(self, amount: int) -> None:
         """Adds or subtracts money from the player's account."""
+        if amount > 0:
+            amount = int(amount * self.money_mult)  # Apply money multiplier for positive amounts
         self.money += amount
 
 class Gun(pygame.sprite.Sprite):
@@ -120,6 +139,7 @@ class Gun(pygame.sprite.Sprite):
         # Ammo
         self.ammo: int = 30
         self.max_ammo: int = 30
+        self.ammo_saver_chance: float = 0.0
 
         # Cooldown timer
         self.last_shot_time: int = 0
@@ -128,6 +148,14 @@ class Gun(pygame.sprite.Sprite):
         self.is_reloading: bool = False
         self.reload_start_time: int = 0
         self.reload_time: int = 2500
+        self.insta_reload_chance: float = 0.0
+
+        # Special effects
+        self.piercing: int = 0
+        self.insta_kill_chance: float = 0.0
+        self.area_damage: float = 0.0
+        self.trinity: bool = False
+        self.auto_shoot: bool = False
 
     def update(self, dt: float) -> None:
         """Updates the gun's position and rotation based on the player's movement direction and mouse position."""
@@ -176,9 +204,18 @@ class Gun(pygame.sprite.Sprite):
         position = player.rect.center + direction * 64
 
         Bullet(position, direction, (all_sprites, bullets), collision_sprites, player)
-        self.ammo -= 1
+
+        # Apply ammo saver chance - randomly don't consume ammo
+        import random
+        if random.random() > self.ammo_saver_chance:
+            self.ammo -= 1
 
         if self.ammo <= 0:
+            # Check for instant reload chance
+            import random
+            if random.random() < self.insta_reload_chance:
+                self.ammo = self.max_ammo
+                return
             self.reload()
 
     def check_cooldown(self):
@@ -233,6 +270,20 @@ class Bullet(pygame.sprite.Sprite):
         # Gun stats
         self.range: float = player.gun.range
         self.damage: float = player.gun.damage
+
+        # Upgrade stats
+        self.piercing: int = player.gun.piercing
+        self.insta_kill_chance: float = player.gun.insta_kill_chance
+        self.area_damage: float = player.gun.area_damage
+        self.trinity: bool = player.gun.trinity
+        self.enemies_hit: set = set()  # Track enemies already hit for piercing
+        self.has_exploded: bool = False
+
+        # Trinity tracking - last 3 shots in magazine are one-shot kills
+        self.is_trinity_shot: bool = (
+                self.trinity and
+                3 >= player.gun.ammo > 0
+        )
 
     def update(self, dt: float) -> None:
         """Updates bullet."""
