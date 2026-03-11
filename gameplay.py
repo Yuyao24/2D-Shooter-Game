@@ -281,14 +281,13 @@ class RoundManager:
 
                 # Check if bullet has already hit max enemies allowed by piercing
                 # max_enemies = 1 base hit + number of piercing levels
-                max_enemies_allowed = 1 + bullet.piercing
-                if len(bullet.enemies_hit) >= max_enemies_allowed:
-                    # Already hit max enemies, delete bullet and stop processing
-                    bullet.kill()
-                    break
+                max_enemies_allowed = bullet.piercing
 
                 # Add this enemy to the hit set
                 bullet.enemies_hit.add(id(enemy))
+
+                # Check if we've now exceeded the max enemies (kill bullet after this enemy is processed)
+                should_kill_bullet = len(bullet.enemies_hit) > max_enemies_allowed
 
                 # Apply damage
                 damage = bullet.damage
@@ -319,7 +318,11 @@ class RoundManager:
                 # Mark that the bullet hit at least one enemy for piercing logic
                 bullet_hit_first_enemy = True
 
-            # Apply explosion damage on first enemy hit
+                # Kill bullet if it exceeded max enemies allowed
+                if should_kill_bullet:
+                    bullet.kill()
+                    break
+
             if bullet.area_damage > 0 and not bullet.has_exploded and bullet_hit_first_enemy:
                 bullet.has_exploded = True
                 explosion_radius = 100
