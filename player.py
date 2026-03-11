@@ -31,10 +31,10 @@ class Player(pygame.sprite.Sprite):
         self.health: float = 100.0
         self.max_health: float = 100.0
         self.lives: int = 5
-        self.damage_reduction: float = 1.0
+        self.damage_mult: float = 1.0
 
         # Money
-        self.money: int = 5000
+        self.money: int = 0
         self.money_mult: float = 1.0
 
         # Upgrade flags (toggles - only purchasable once)
@@ -92,7 +92,7 @@ class Player(pygame.sprite.Sprite):
     def take_damage(self, amount: float) -> None:
         """Reduces the player's health by the given amount, applying damage reduction."""
         # Apply damage reduction from upgrades
-        self.health -= amount * self.damage_reduction
+        self.health -= amount * self.damage_mult
 
     def reset(self, new_position: tuple[float, float]) -> None:
         """

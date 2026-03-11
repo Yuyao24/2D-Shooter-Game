@@ -6,6 +6,7 @@ from settings import (WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_CENTER, COLOR_WHITE, C
 from menus import Button, Text
 from player import Player
 from typing import Callable
+from stats_manager import StatsManager
 
 
 class Upgrade:
@@ -168,9 +169,9 @@ def create_upgrade_list() -> list[Upgrade]:
         ),
         Upgrade(
             "Damage Boost",
-            "Damage +10%",
+            "Damage +20%",
             600, 1,
-            lambda p: setattr(p.gun, 'damage', p.gun.damage * 1.1)
+            lambda p: setattr(p.gun, 'damage', p.gun.damage * 1.2)
         ),
         Upgrade(
             "Fire Rate Boost",
@@ -303,8 +304,9 @@ def create_upgrade_list() -> list[Upgrade]:
 
     return upgrades
 
-def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock, player: Player):
-    """Placeholder for upgrade menu function."""
+def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock,
+                 player: Player, stats_manager: StatsManager) -> str:
+    """Displays the upgrade menu where players can purchase upgrades between rounds."""
     pygame.mouse.set_visible(True)
 
     upgrades = create_upgrade_list()
@@ -355,8 +357,10 @@ def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock, player: Playe
                     continue  # Shouldn't happen due to button state, but double check
 
                 for card in selected_cards:
-                    player.money -= card.upgrade.cost
+                    player.update_money(-card.upgrade.cost)
+                    stats_manager.update_money(card.upgrade.cost)
                     card.upgrade.apply(player)
+                    stats_manager.update_upgrades()
 
                 pygame.mouse.set_visible(False)
                 return "CONTINUE"  # Proceed to next round

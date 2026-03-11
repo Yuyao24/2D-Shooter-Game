@@ -356,6 +356,10 @@ def game_over_menu(screen: pygame.Surface, clock: pygame.time.Clock, game_over_s
                       font_size=48, colour=COLOR_DARK_BLUE)
     flag_text = Text(f"Flags Planted: {game_over_stats['Flags']}", (WINDOW_WIDTH // 2, 370),
                      font_size=48, colour=COLOR_DARK_BLUE)
+    upgrades_text = Text(f"Upgrades Purchased: {game_over_stats['Upgrades']}", (WINDOW_WIDTH // 2, 420),
+                         font_size=48, colour=COLOR_DARK_BLUE)
+    money_text = Text(f"Money Spent: ${game_over_stats['Money']}", (WINDOW_WIDTH // 2, 470),
+                        font_size=48, colour=COLOR_DARK_BLUE)
 
     # Update high score if needed
     score = game_over_stats['Score']
@@ -390,6 +394,8 @@ def game_over_menu(screen: pygame.Surface, clock: pygame.time.Clock, game_over_s
         round_text.draw(screen)
         kills_text.draw(screen)
         flag_text.draw(screen)
+        upgrades_text.draw(screen)
+        money_text.draw(screen)
 
         # Render buttons
         for button in buttons:

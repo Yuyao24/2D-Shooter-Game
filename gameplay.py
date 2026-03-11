@@ -76,7 +76,7 @@ class RoundManager:
         Initializes a new round by resetting all game entities.
         """
         # Open upgrade menu
-        next_state = upgrade_menu(self.screen, self.clock, self.player)
+        next_state = upgrade_menu(self.screen, self.clock, self.player, self.stats_manager)
         if next_state == "MAIN_MENU":
             return "MAIN_MENU"
         # if CONTINUE, continue with the next round
@@ -281,7 +281,7 @@ class RoundManager:
 
                 # Check if bullet has already hit max enemies allowed by piercing
                 # max_enemies = 1 base hit + number of piercing levels
-                max_enemies_allowed =  bullet.piercing
+                max_enemies_allowed = 1 + bullet.piercing
                 if len(bullet.enemies_hit) >= max_enemies_allowed:
                     # Already hit max enemies, delete bullet and stop processing
                     bullet.kill()
