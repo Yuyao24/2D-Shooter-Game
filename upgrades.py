@@ -210,7 +210,7 @@ def create_upgrade_list() -> list[Upgrade]:
             lambda p: setattr(p.gun, 'range', p.gun.range * 1.3)
         ),
         Upgrade(
-            "Magazine Upgrade",
+            "Magazine Boost",
             "Magazine size +5",
             550, 1,
             lambda p: setattr(p.gun, 'max_ammo', p.gun.max_ammo + 5)
@@ -266,7 +266,7 @@ def create_upgrade_list() -> list[Upgrade]:
             lambda p: setattr(p.gun, 'insta_kill_chance', p.gun.insta_kill_chance + 0.05)
         ),
         Upgrade(
-            "Explosive Rounds",
+            "Shrapnel Rounds",
             "Bullets deal +20% area damage",
             4200, 3,
             lambda p: setattr(p.gun, 'area_damage', p.gun.area_damage + 0.2)
@@ -286,7 +286,7 @@ def create_upgrade_list() -> list[Upgrade]:
                        setattr(p.gun, 'max_ammo', p.gun.max_ammo - 25))
         ),
         Upgrade(
-            "Adrenaline Rush",
+            "Adrenaline",
             "Movement speed +25% when below 30% health",
             2200, 3,
             lambda p: (setattr(p, 'adrenaline', True),
@@ -295,7 +295,7 @@ def create_upgrade_list() -> list[Upgrade]:
         Upgrade(
             "Auto Clicker",
             "Automatically shoots when mouse button held down, +50% fire rate",
-            3000, 3,
+            10000, 3,
             lambda p: (setattr(p.gun, 'auto_shoot', True),
                        setattr(p.gun, 'fire_rate', p.gun.fire_rate * 0.5),
                        setattr(p, 'has_auto_shoot', True))

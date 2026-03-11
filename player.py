@@ -34,7 +34,7 @@ class Player(pygame.sprite.Sprite):
         self.damage_mult: float = 1.0
 
         # Money
-        self.money: int = 0
+        self.money: int = 500
         self.money_mult: float = 1.0
 
         # Upgrade flags (toggles - only purchasable once)
