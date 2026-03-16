@@ -3,7 +3,7 @@ import random
 from settings import (WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_CENTER, COLOR_WHITE, COLOR_BLACK,
                       COLOR_GREY, COLOR_BLUE, COLOR_DARK_BLUE, COLOR_GREEN, COLOR_DARK_GREEN,
                       COLOR_RED, COLOR_YELLOW, COLOR_GOLD)
-from menus import Button, Text
+from menus import Button, Text, confirmation_menu
 from player import Player
 from typing import Callable
 from stats_manager import StatsManager
@@ -351,7 +351,11 @@ def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock,
                 # Check if card is clicked. Selection toggle handled inside card class.
                 card.is_clicked(event)
             if quit_button.is_clicked(event):
-                return "MAIN_MENU"
+                confirmed = confirmation_menu(screen, clock,
+                                            "Are you sure you want to quit?"\
+                                            "Your progress will be saved.")
+                if confirmed:
+                    return "MAIN_MENU"
             if buy_button.is_clicked(event):
                 if total_cost > player.money or not selected_cards:
                     continue  # Shouldn't happen due to button state, but double check

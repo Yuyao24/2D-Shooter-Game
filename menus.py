@@ -251,7 +251,10 @@ def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     while True:
         for event in pygame.event.get(): # Event loop
             if quit_button.is_clicked(event) or event.type == pygame.QUIT:
-                return "QUIT"  # Change game state to QUIT
+                confirmed = confirmation_menu(screen, clock,
+                                            "Are you sure you want to quit?")
+                if confirmed:
+                    return "QUIT"  # Change game state to QUIT
             if resume_game_button.is_clicked(event):
                 return "PLAYING"  # Change game state to PLAYING
             if new_game_button.is_clicked(event):
@@ -309,7 +312,11 @@ def pause_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
             if event.type == pygame.QUIT:
                 return "QUIT"
             if quit_button.is_clicked(event):
-                return "MAIN_MENU"  # Change game state to MAIN MENU
+                confirmed = confirmation_menu(screen, clock, 
+                                                "Are you sure you want to quit?" \
+                                                "Your progress will be saved.")
+                if confirmed:
+                    return "MAIN_MENU"  # Change game state to MAIN MENU
             if resume_button.is_clicked(event) or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 return "PLAYING"  # Change game state to PLAYING
 
@@ -403,3 +410,85 @@ def game_over_menu(screen: pygame.Surface, clock: pygame.time.Clock, game_over_s
 
         pygame.display.flip() # Update display
         clock.tick(60)
+
+def confirmation_menu(screen: pygame.Surface, clock: pygame.time.Clock, message: str) -> bool:
+    """
+    Displays a confirmation dialog with the given message and Yes/No buttons.
+
+    :return: True if the user clicks Yes, False if the user clicks No or closes the dialog.
+    """
+
+    pygame.mouse.set_visible(True)
+    # Dialog box
+    dialog_rect = pygame.Rect(0, 0, 500, 360)
+    dialog_rect.center = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
+    
+    # Create dialog text
+    wrapped_message = wrap_text(message, 400)
+    text_objects = []
+    for i, line in enumerate(wrapped_message):
+        text_objects.append(Text(line, (WINDOW_WIDTH // 2, 240 + i * 60), font_size=48, colour=COLOR_BLACK))
+
+    # Create buttons
+    yes_button = Button("Yes", (WINDOW_WIDTH // 2 - 100, 440), 150, 80)
+    no_button = Button("No", (WINDOW_WIDTH // 2 + 100, 440), 150, 80)
+    buttons = [yes_button, no_button]
+
+    while True:
+        for event in pygame.event.get(): # Event loop
+            if event.type == pygame.QUIT:
+                return False
+            if yes_button.is_clicked(event):
+                return True
+            if no_button.is_clicked(event):
+                return False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                return False
+
+        # Update cursor
+        if any(button.is_hovered() for button in buttons):
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+        else:
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+
+        # Draw box
+        pygame.draw.rect(screen, COLOR_WHITE, dialog_rect)
+        pygame.draw.rect(screen, COLOR_BLACK, dialog_rect, 3)  # Border
+
+        # Render dialog text
+        for text_obj in text_objects:
+            text_obj.draw(screen)
+
+        # Render buttons
+        for button in buttons:
+            button.draw(screen)
+
+        pygame.display.flip() # Update display
+        clock.tick(60)
+
+def wrap_text(text: str, max_width: int) -> list[str]:
+    """
+    Wraps the given text into multiple lines so that it fits within the specified width.
+
+    :param text: The text to wrap.
+    :param font: The font used to measure text width.
+    :param max_width: The maximum width in pixels for each line.
+    :return: A list of strings, where each string is a line of wrapped text.
+    """
+    font = pygame.font.Font(None, 50)  # Use a default font and size for measurement
+    words = text.split(' ')
+    lines = []
+    current_line = ""
+
+    for word in words:
+        test_line = current_line + word + " "
+        if font.size(test_line)[0] <= max_width:
+            current_line = test_line
+        else:
+            lines.append(current_line.strip())
+            current_line = word + " "
+
+    if current_line:
+        lines.append(current_line.strip())
+
+    return lines
