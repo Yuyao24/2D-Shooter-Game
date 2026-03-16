@@ -1,7 +1,7 @@
 import pygame
-from settings import (AssetManager, save_game, WINDOW_WIDTH, WINDOW_HEIGHT, COLOR_WHITE, COLOR_BLACK, COLOR_GREY,
+from settings import (AssetManager, save_game_data, WINDOW_WIDTH, WINDOW_HEIGHT, COLOR_WHITE, COLOR_BLACK, COLOR_GREY,
                       COLOR_BLUE, COLOR_DARK_BLUE, COLOR_YELLOW, COLOR_RED, COLOR_GREEN,
-                      COLOR_DARK_GREEN, WINDOW_CENTER)
+                      COLOR_DARK_GREEN, WINDOW_CENTER, save_game_data)
 from player import Player
 from flag import Flag
 
@@ -251,10 +251,7 @@ def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     while True:
         for event in pygame.event.get(): # Event loop
             if quit_button.is_clicked(event) or event.type == pygame.QUIT:
-                confirmed = confirmation_menu(screen, clock,
-                                            "Are you sure you want to quit?")
-                if confirmed:
-                    return "QUIT"  # Change game state to QUIT
+                return "QUIT"  # Change game state to QUIT
             if resume_game_button.is_clicked(event):
                 return "PLAYING"  # Change game state to PLAYING
             if new_game_button.is_clicked(event):
@@ -314,10 +311,11 @@ def pause_menu(screen: pygame.Surface, clock: pygame.time.Clock,
                 return "QUIT"
             if quit_button.is_clicked(event):
                 confirmed = confirmation_menu(screen, clock, 
-                                                "Are you sure you want to quit? " \
-                                                "Your progress will be saved.")
+                                                "Are you sure you want to quit? "
+                                                "Your progress will be saved.",
+                                                "Quit", "Cancel")
                 if confirmed:
-                    save_game(round_num, player, stats_manager)  # Save game before quitting
+                    save_game_data(round_num, player, stats_manager)  # Save game before quitting
                     return "MAIN_MENU"  # Change game state to MAIN MENU
             if resume_button.is_clicked(event) or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 return "PLAYING"  # Change game state to PLAYING
@@ -413,36 +411,44 @@ def game_over_menu(screen: pygame.Surface, clock: pygame.time.Clock, game_over_s
         pygame.display.flip() # Update display
         clock.tick(60)
 
-def confirmation_menu(screen: pygame.Surface, clock: pygame.time.Clock, message: str) -> bool:
+def confirmation_menu(screen: pygame.Surface, clock: pygame.time.Clock,
+                      message: str, confirm_message: str, decline_message: str) -> bool:
     """
-    Displays a confirmation dialog with the given message and Yes/No buttons.
+    Displays a confirmation dialog with the given message and appropriate buttons.
 
+    :param screen: The screen where the menu is drawn.
+    :param clock: The clock to be used (redundant in this menu).
+    :param message: The message to display in the confirmation dialog.
+    :param confirm_message: The text to display on the confirm button (e.g., "Yes").
+    :param decline_message: The text to display on the decline button (e.g., "No").
     :return: True if the user clicks Yes, False if the user clicks No or closes the dialog.
     """
 
     pygame.mouse.set_visible(True)
     # Dialog box
-    dialog_rect = pygame.Rect(0, 0, 500, 360)
+    dialog_rect = pygame.Rect(0, 0, 640, 360)
     dialog_rect.center = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
     
     # Create dialog text
-    wrapped_message = wrap_text(message, 400)
+    wrapped_message = wrap_text(message, 650, 48)
     text_objects = []
     for i, line in enumerate(wrapped_message):
-        text_objects.append(Text(line, (WINDOW_WIDTH // 2, 240 + i * 60), font_size=48, colour=COLOR_BLACK))
+        text_objects.append(Text(line, (WINDOW_WIDTH // 2, 240 + i * 60),
+                                 font_size=48, colour=COLOR_BLACK))
 
     # Create buttons
-    yes_button = Button("Yes", (WINDOW_WIDTH // 2 - 100, 440), 150, 80)
-    no_button = Button("No", (WINDOW_WIDTH // 2 + 100, 440), 150, 80)
-    buttons = [yes_button, no_button]
+    confirm_button = Button(confirm_message, (WINDOW_WIDTH // 2 + 125, 440), 150, 80)
+    cancel_button = Button(decline_message, (WINDOW_WIDTH // 2 - 125, 440), 150, 80)
+    buttons = [confirm_button, cancel_button]
 
     while True:
         for event in pygame.event.get(): # Event loop
             if event.type == pygame.QUIT:
-                return False
-            if yes_button.is_clicked(event):
+                pygame.quit()
+                quit()  # Shouldn't happen during fullscreen gameplay, but just in case
+            if confirm_button.is_clicked(event):
                 return True
-            if no_button.is_clicked(event):
+            if cancel_button.is_clicked(event):
                 return False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 return False
@@ -453,31 +459,27 @@ def confirmation_menu(screen: pygame.Surface, clock: pygame.time.Clock, message:
         else:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
-        # Draw box
+        # Render all elements
         pygame.draw.rect(screen, COLOR_WHITE, dialog_rect)
         pygame.draw.rect(screen, COLOR_BLACK, dialog_rect, 3)  # Border
-
-        # Render dialog text
         for text_obj in text_objects:
             text_obj.draw(screen)
-
-        # Render buttons
         for button in buttons:
             button.draw(screen)
 
         pygame.display.flip() # Update display
         clock.tick(60)
 
-def wrap_text(text: str, max_width: int) -> list[str]:
+def wrap_text(text: str, max_width: int, font_size: int) -> list[str]:
     """
     Wraps the given text into multiple lines so that it fits within the specified width.
 
     :param text: The text to wrap.
-    :param font: The font used to measure text width.
     :param max_width: The maximum width in pixels for each line.
+    :param font_size: The font size to use for measuring text width.
     :return: A list of strings, where each string is a line of wrapped text.
     """
-    font = pygame.font.Font(None, 50)  # Use a default font and size for measurement
+    font = pygame.font.Font(None, font_size)
     words = text.split(' ')
     lines = []
     current_line = ""

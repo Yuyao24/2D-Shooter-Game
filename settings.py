@@ -58,23 +58,21 @@ class AllSprites(pygame.sprite.Group):
         for sprite in sorted(self.sprites(), key=lambda s: (getattr(s, 'z_layer', 0), s.rect.bottom)):
             self.display_surface.blit(sprite.image, (int(sprite.rect.left - self.offset.x), int(sprite.rect.top - self.offset.y)))
 
-def game_save_exists() -> bool:
+def save_data_exists() -> bool:
     """
     Checks whether there is an existing game save.
 
     :return: True if there is a game save, False otherwise.
     """
     with open ("game_save/save_data.txt") as f:
-        return f.read() != ""  # If the file is empty, there is no save data -> return False
+        return f.read() != ""  # If the file is empty -> return False
     
-def reset_game_save() -> None:
-    """
-    Clears the game save data file.
-    """
+def clear_save_data() -> None:
+    """Clears the game save data file. """
     with open ("game_save/save_data.txt", "w") as f:
         f.write("")
 
-def save_game(round_number: int, player, stats_manager,
+def save_game_data(round_number: int, player, stats_manager,
               in_upgrade_menu: bool = False,
               offered_upgrades: list = None) -> None:
     """
@@ -90,7 +88,7 @@ def save_game(round_number: int, player, stats_manager,
         # Round data and state
         "round_number": round_number,
         "in_upgrade_menu": in_upgrade_menu,
-        "offered_upgrades": [u.name for u in offered_upgrades] if offered_upgrades is not None else [],
+        "offered_upgrades": [u.name for u in offered_upgrades] if offered_upgrades else [],
 
         # Player stats
         "player": {

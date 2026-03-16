@@ -1,6 +1,6 @@
 import pygame
 import random
-from settings import (save_game, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_CENTER, COLOR_WHITE, COLOR_BLACK,
+from settings import (save_game_data, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_CENTER, COLOR_WHITE, COLOR_BLACK,
                       COLOR_GREY, COLOR_BLUE, COLOR_DARK_BLUE, COLOR_GREEN, COLOR_DARK_GREEN,
                       COLOR_RED, COLOR_YELLOW, COLOR_GOLD)
 from menus import Button, Text, confirmation_menu
@@ -352,12 +352,13 @@ def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock,
                 card.is_clicked(event)
             if quit_button.is_clicked(event):
                 confirmed = confirmation_menu(screen, clock,
-                                            "Are you sure you want to quit? "\
-                                            "Your progress will be saved.")
+                                            "Are you sure you want to quit? "
+                                            "Your progress will be saved.",
+                                            "Quit", "Cancel")
                 if confirmed:
-                    save_game(round_num, player, stats_manager,
+                    save_game_data(round_num, player, stats_manager,
                               in_upgrade_menu=True, offered_upgrades=offered_upgrades)  # Save game before quitting
-                    return "MAIN_MENU"
+                    return "MAIN_MENU"  # Go back to main menu
             if buy_button.is_clicked(event):
                 if total_cost > player.money or not selected_cards:
                     continue  # Shouldn't happen due to button state, but double check
