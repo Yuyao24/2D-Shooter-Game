@@ -1,5 +1,5 @@
 import pygame
-from settings import (AssetManager, WINDOW_WIDTH, WINDOW_HEIGHT, COLOR_WHITE, COLOR_BLACK, COLOR_GREY,
+from settings import (AssetManager, save_game, WINDOW_WIDTH, WINDOW_HEIGHT, COLOR_WHITE, COLOR_BLACK, COLOR_GREY,
                       COLOR_BLUE, COLOR_DARK_BLUE, COLOR_YELLOW, COLOR_RED, COLOR_GREEN,
                       COLOR_DARK_GREEN, WINDOW_CENTER)
 from player import Player
@@ -283,7 +283,8 @@ def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
         pygame.display.flip() # Update display
         clock.tick(60)
 
-def pause_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
+def pause_menu(screen: pygame.Surface, clock: pygame.time.Clock,
+               round_num: int, player, stats_manager) -> str:
     """
     Displays the pause menu as a transparent overlay and handles user interaction.
     
@@ -313,9 +314,10 @@ def pause_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
                 return "QUIT"
             if quit_button.is_clicked(event):
                 confirmed = confirmation_menu(screen, clock, 
-                                                "Are you sure you want to quit?" \
+                                                "Are you sure you want to quit? " \
                                                 "Your progress will be saved.")
                 if confirmed:
+                    save_game(round_num, player, stats_manager)  # Save game before quitting
                     return "MAIN_MENU"  # Change game state to MAIN MENU
             if resume_button.is_clicked(event) or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 return "PLAYING"  # Change game state to PLAYING

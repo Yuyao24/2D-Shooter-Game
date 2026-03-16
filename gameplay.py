@@ -76,7 +76,7 @@ class RoundManager:
         Initializes a new round by resetting all game entities.
         """
         # Open upgrade menu
-        next_state = upgrade_menu(self.screen, self.clock, self.player, self.stats_manager)
+        next_state = upgrade_menu(self.screen, self.clock, self.round_number, self.player, self.stats_manager)
         if next_state == "MAIN_MENU":
             return "MAIN_MENU"
         # if CONTINUE, continue with the next round
@@ -432,7 +432,8 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
             round_manager.player.shoot(round_manager.all_sprites, round_manager.bullet_sprites)
 
         if paused:
-            next_state = pause_menu(screen, clock)
+            next_state = pause_menu(screen, clock, round_manager.round_number, 
+                                    round_manager.player, round_manager.stats_manager)
             if next_state == "PLAYING":
                 paused = False
                 mouse_screen_pos.update(pygame.mouse.get_pos())

@@ -1,6 +1,6 @@
 import pygame
 import random
-from settings import (WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_CENTER, COLOR_WHITE, COLOR_BLACK,
+from settings import (save_game, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_CENTER, COLOR_WHITE, COLOR_BLACK,
                       COLOR_GREY, COLOR_BLUE, COLOR_DARK_BLUE, COLOR_GREEN, COLOR_DARK_GREEN,
                       COLOR_RED, COLOR_YELLOW, COLOR_GOLD)
 from menus import Button, Text, confirmation_menu
@@ -195,7 +195,7 @@ def create_upgrade_list() -> list[Upgrade]:
             "Toughness",
             "Damage taken -10%",
             400, 1,
-            lambda p: setattr(p, 'damage_reduction', p.damage_reduction * 0.9)
+            lambda p: setattr(p, 'damage_mult', p.damage_mult * 0.9)
         ),
         Upgrade(
             "Quick Reload",
@@ -305,7 +305,7 @@ def create_upgrade_list() -> list[Upgrade]:
     return upgrades
 
 def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock,
-                 player: Player, stats_manager: StatsManager) -> str:
+                 round_num: int, player: Player, stats_manager: StatsManager) -> str:
     """Displays the upgrade menu where players can purchase upgrades between rounds."""
     pygame.mouse.set_visible(True)
 
@@ -352,9 +352,11 @@ def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock,
                 card.is_clicked(event)
             if quit_button.is_clicked(event):
                 confirmed = confirmation_menu(screen, clock,
-                                            "Are you sure you want to quit?"\
+                                            "Are you sure you want to quit? "\
                                             "Your progress will be saved.")
                 if confirmed:
+                    save_game(round_num, player, stats_manager,
+                              in_upgrade_menu=True, offered_upgrades=offered_upgrades)  # Save game before quitting
                     return "MAIN_MENU"
             if buy_button.is_clicked(event):
                 if total_cost > player.money or not selected_cards:

@@ -31,7 +31,7 @@ class Player(pygame.sprite.Sprite):
         self.health: float = 100.0
         self.max_health: float = 100.0
         self.lives: int = 5
-        self.damage_mult: float = 1.0
+        self.damage_mult: float = 1.0  # Damage reduction
 
         # Money
         self.money: int = 500

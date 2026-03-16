@@ -1,5 +1,6 @@
 import pygame
 import os
+import json
 
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
@@ -56,3 +57,83 @@ class AllSprites(pygame.sprite.Group):
         # Sort by z_layer then by bottom Y for Y-sorting
         for sprite in sorted(self.sprites(), key=lambda s: (getattr(s, 'z_layer', 0), s.rect.bottom)):
             self.display_surface.blit(sprite.image, (int(sprite.rect.left - self.offset.x), int(sprite.rect.top - self.offset.y)))
+
+def game_save_exists() -> bool:
+    """
+    Checks whether there is an existing game save.
+
+    :return: True if there is a game save, False otherwise.
+    """
+    with open ("game_save/save_data.txt") as f:
+        return f.read() != ""  # If the file is empty, there is no save data -> return False
+    
+def reset_game_save() -> None:
+    """
+    Clears the game save data file.
+    """
+    with open ("game_save/save_data.txt", "w") as f:
+        f.write("")
+
+def save_game(round_number: int, player, stats_manager,
+              in_upgrade_menu: bool = False,
+              offered_upgrades: list = None) -> None:
+    """
+    Saves the current game state to a file.
+    :param round_number: The current round number.
+    :param player: The player object containing stats.
+    :param stats_manager: The stats manager object containing score and other stats.
+    :param in_upgrade_menu: Whether the player is currently in the upgrade menu.
+    :param offered_upgrades: The list of currently offered upgrades (if in upgrade menu).
+    """
+
+    data = {
+        # Round data and state
+        "round_number": round_number,
+        "in_upgrade_menu": in_upgrade_menu,
+        "offered_upgrades": [u.name for u in offered_upgrades] if offered_upgrades is not None else [],
+
+        # Player stats
+        "player": {
+            "health" : player.health,
+            "max_health" : player.max_health,
+            "lives" : player.lives,
+            "money" : player.money,
+            "money_mult" : player.money_mult,
+            "speed" : player.speed,
+            "damage_mult" : player.damage_mult,
+            "life_steal" : player.life_steal,
+            "has_trinity": player.has_trinity,
+            "has_adrenaline": player.has_adrenaline,
+            "has_auto_shoot": player.has_auto_shoot,
+            "adrenaline": player.adrenaline,
+        },
+
+        # Gun stats
+        "gun": {
+            "damage": player.gun.damage,
+            "fire_rate": player.gun.fire_rate,
+            "range": player.gun.range,
+            "bullet_speed": player.gun.bullet_speed,
+            "ammo": player.gun.ammo,
+            "max_ammo": player.gun.max_ammo,
+            "ammo_saver_chance": player.gun.ammo_saver_chance,
+            "piercing": player.gun.piercing,
+            "insta_kill_chance": player.gun.insta_kill_chance,
+            "area_damage": player.gun.area_damage,
+            "trinity": player.gun.trinity,
+            "auto_shoot": player.gun.auto_shoot,
+        },
+
+        # Stats manager data
+        "stats_manager": {
+            "score": stats_manager.score,
+            "enemies_killed": stats_manager.enemies_killed,
+            "rounds_completed": stats_manager.rounds_completed,
+            "flags_planted": stats_manager.flags_planted,
+            "upgrades_purchased": stats_manager.upgrades_purchased,
+            "money_spent": stats_manager.money_spent,
+        }
+    }
+
+    with open("game_save/save_data.txt", "w") as f:
+        json.dump(data, f, indent=4)
