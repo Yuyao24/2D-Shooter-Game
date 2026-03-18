@@ -1,5 +1,5 @@
 import pygame
-from settings import (AssetManager, save_game_data, WINDOW_WIDTH, WINDOW_HEIGHT, COLOR_WHITE, COLOR_BLACK, COLOR_GREY,
+from settings import (AssetManager, save_game_data, save_data_exists, clear_save_data, WINDOW_WIDTH, WINDOW_HEIGHT, COLOR_WHITE, COLOR_BLACK, COLOR_GREY,
                       COLOR_BLUE, COLOR_DARK_BLUE, COLOR_YELLOW, COLOR_RED, COLOR_GREEN,
                       COLOR_DARK_GREEN, WINDOW_CENTER, save_game_data)
 from player import Player
@@ -219,7 +219,7 @@ def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     """
     Displays the main menu and handles user interaction.
     
-    :return: The next game state (e.g., "PLAYING", "QUIT").
+    :return: A tuple of (next game state, resume flag).
     """
 
     pygame.mouse.set_visible(True)
@@ -235,13 +235,6 @@ def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     high_score_text = Text(f"High Score: {high_score}",
                            (WINDOW_WIDTH // 2, 120), font_size=100, colour=COLOR_DARK_BLUE)
 
-    # Load save file
-    try:
-        with open("game_save/save_data.txt", "r") as save_file:
-            save_data = save_file.read()
-    except FileNotFoundError:
-        save_data = None
-
     # Create buttons
     resume_game_button = Button("Resume Game", (WINDOW_WIDTH // 2, 300), 300, 120)
     new_game_button = Button("New Game", (WINDOW_WIDTH // 2, 450), 300, 120)
@@ -249,24 +242,35 @@ def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     buttons = [resume_game_button, new_game_button, quit_button]
 
     while True:
+
+        # Only allow resuming if there is a save
+        resume_game_button.is_clickable = save_data_exists()
+
         for event in pygame.event.get(): # Event loop
             if quit_button.is_clicked(event) or event.type == pygame.QUIT:
-                return "QUIT"  # Change game state to QUIT
+                return "QUIT", False  # Change game state to QUIT, (False irrelevant for quitting)
             if resume_game_button.is_clicked(event):
-                return "PLAYING"  # Change game state to PLAYING
+                return "PLAYING", True  # Change game state to PLAYING, flag to indicate resuming from save
+
             if new_game_button.is_clicked(event):
-                return "PLAYING"  # Change game state to PLAYING
+                if save_data_exists():
+                    confirmed = confirmation_menu(screen, clock,
+                                                  "Are you sure you want to start a new game? "
+                                                  "Your previous progress will be lost.",
+                                                  "Yes", "Cancel")
+                    if confirmed:
+                        clear_save_data()
+                        return "PLAYING", False  # Change game state to PLAYING, flag to indicate not resuming from save
+
+                else:
+                    # If no save data, just start new game without confirmation
+                    return "PLAYING", False  # Change game state to PLAYING, flag to indicate not resuming from save
 
         # Update cursor
         if any(button.is_hovered() for button in buttons):
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
         else:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
-
-        if not save_data:  # Disable resume button if no save data
-            resume_game_button.is_clickable = False
-        else:
-            resume_game_button.is_clickable = True
 
         screen.fill(COLOR_WHITE)  # Clear screen with a white background
 

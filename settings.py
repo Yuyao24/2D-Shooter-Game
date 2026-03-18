@@ -92,7 +92,6 @@ def save_game_data(round_number: int, player, stats_manager,
 
         # Player stats
         "player": {
-            "health" : player.health,
             "max_health" : player.max_health,
             "lives" : player.lives,
             "money" : player.money,
@@ -112,8 +111,9 @@ def save_game_data(round_number: int, player, stats_manager,
             "fire_rate": player.gun.fire_rate,
             "range": player.gun.range,
             "bullet_speed": player.gun.bullet_speed,
-            "ammo": player.gun.ammo,
             "max_ammo": player.gun.max_ammo,
+            "reload_time": player.gun.reload_time,
+            "insta_reload_chance": player.gun.insta_reload_chance,
             "ammo_saver_chance": player.gun.ammo_saver_chance,
             "piercing": player.gun.piercing,
             "insta_kill_chance": player.gun.insta_kill_chance,
@@ -135,3 +135,64 @@ def save_game_data(round_number: int, player, stats_manager,
 
     with open("game_save/save_data.txt", "w") as f:
         json.dump(data, f, indent=4)
+
+def load_game_data() -> dict:
+    """
+    Loads the game state from a file.
+
+    :return: A dictionary containing the loaded game data.
+    """
+    with open("game_save/save_data.txt", "r") as f:
+        data = json.load(f)
+    return data
+
+def apply_save_data(data: dict, player, stats_manager) -> None:
+    """
+    Applies loaded game data to the player and stats manager objects.
+
+    :param data: The dictionary containing the loaded game data.
+    :param player: The player object to apply the data to.
+    :param stats_manager: The stats manager object to apply the data to.
+    """
+    # Apply round and upgrade menu state
+    p = data["player"]
+    g = data["gun"]
+    s = data["stats_manager"]
+
+    # Player stats
+    player.health = p["max_health"]  # Set current health to max health
+    player.max_health = p["max_health"]
+    player.lives = p["lives"]
+    player.money = p["money"]
+    player.money_mult = p["money_mult"]
+    player.speed = p["speed"]
+    player.damage_mult = p["damage_mult"]
+    player.life_steal = p["life_steal"]
+    player.has_trinity = p["has_trinity"]
+    player.has_adrenaline = p["has_adrenaline"]
+    player.has_auto_shoot = p["has_auto_shoot"]
+    player.adrenaline = p["adrenaline"]
+
+    # Gun stats
+    player.gun.damage = g["damage"]
+    player.gun.fire_rate = g["fire_rate"]
+    player.gun.range = g["range"]
+    player.gun.bullet_speed = g["bullet_speed"]
+    player.gun.ammo = g["max_ammo"]  # Set current ammo to max ammo
+    player.gun.max_ammo = g["max_ammo"]
+    player.gun.reload_time = g["reload_time"]
+    player.gun.insta_reload_chance = g["insta_reload_chance"]
+    player.gun.ammo_saver_chance = g["ammo_saver_chance"]
+    player.gun.piercing = g["piercing"]
+    player.gun.insta_kill_chance = g["insta_kill_chance"]
+    player.gun.area_damage = g["area_damage"]
+    player.gun.trinity = g["trinity"]
+    player.gun.auto_shoot = g["auto_shoot"]
+
+    # Stats manager data
+    stats_manager.score = s["score"]
+    stats_manager.enemies_killed = s["enemies_killed"]
+    stats_manager.rounds_completed = s["rounds_completed"]
+    stats_manager.flags_planted = s["flags_planted"]
+    stats_manager.upgrades_purchased = s["upgrades_purchased"]
+    stats_manager.money_spent = s["money_spent"]

@@ -305,12 +305,19 @@ def create_upgrade_list() -> list[Upgrade]:
     return upgrades
 
 def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock,
-                 round_num: int, player: Player, stats_manager: StatsManager) -> str:
+                 round_num: int, player: Player, stats_manager: StatsManager,
+                 forced_upgrades: list[str] = None) -> str:
     """Displays the upgrade menu where players can purchase upgrades between rounds."""
     pygame.mouse.set_visible(True)
 
     upgrades = create_upgrade_list()
-    offered_upgrades = select_random_upgrades(upgrades, player)
+
+    # If forced_upgrades is provided, only offer those upgrades. Otherwise, select randomly.
+    if forced_upgrades is None:
+        offered_upgrades = select_random_upgrades(upgrades, player)
+    else:
+        offered_upgrades = [u for u in upgrades if u.name in forced_upgrades]
+
 
     card_spacing = 350
     start_x = WINDOW_WIDTH // 2 - card_spacing
