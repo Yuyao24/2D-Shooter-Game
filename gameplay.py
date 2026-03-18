@@ -45,7 +45,6 @@ class RoundManager:
         self.crosshair_img = pygame.image.load("assets/images/crosshair.png").convert_alpha()
         self.crosshair_rect = self.crosshair_img.get_rect()
 
-        self.start_game()
 
     def update(self, dt) -> str:
         """
@@ -112,7 +111,7 @@ class RoundManager:
         self.show_message(f"ROUND {self.round_number}", 2000)
         return None
 
-    def start_game(self) -> None:
+    def start_game(self, message: bool = True) -> None:
         """
         Initializes the game state for the first round, including:
         loading the map, spawning the player, flag, and enemies.
@@ -145,7 +144,8 @@ class RoundManager:
         self.hud = HUD(self.player, self.flag)
 
         # Show start message
-        self.show_message(f"ROUND {self.round_number}", 2000)
+        if message:
+            self.show_message(f"ROUND {self.round_number}", 2000)
 
     def spawn_group(self, position, count):
         for i in range(count):
@@ -410,7 +410,9 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock,
 
     pygame.mouse.set_visible(False)
 
+    # Initialize round manager
     round_manager = RoundManager(screen, clock)
+    round_manager.start_game(message = not resume)  # Don't show "ROUND 1" message if resuming
 
     if resume:
         save_data = load_game_data()
