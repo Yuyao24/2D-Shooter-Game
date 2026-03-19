@@ -1,6 +1,6 @@
 import pygame
 import random
-from settings import (save_game_data, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_CENTER, COLOR_WHITE, COLOR_BLACK,
+from settings import (save_game_data, UI_SCALE,WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_CENTER, COLOR_WHITE, COLOR_BLACK,
                       COLOR_GREY, COLOR_BLUE, COLOR_DARK_BLUE, COLOR_GREEN, COLOR_DARK_GREEN,
                       COLOR_RED, COLOR_YELLOW, COLOR_GOLD)
 from menus import Button, Text, confirmation_menu
@@ -59,30 +59,30 @@ class UpgradeCard:
 
         # Draw card background with tier color
         pygame.draw.rect(screen, self.color, self.rect)
-        pygame.draw.rect(screen, self.border_color, self.rect, 4)
+        pygame.draw.rect(screen, self.border_color, self.rect, int(4 * UI_SCALE))
 
         if self.selected:
             # Highlighted border effect
-            pygame.draw.rect(screen, COLOR_BLACK, self.rect.inflate(10, 10), 5)
+            pygame.draw.rect(screen, COLOR_BLACK, self.rect.inflate(int(10 * UI_SCALE), int(10 * UI_SCALE)), int(5 * UI_SCALE))
 
         # Draw upgrade name at top
-        name_text = Text(self.upgrade.name, (self.position[0], self.position[1] - 140),
-                         font_size=40, colour=COLOR_BLACK)
+        name_text = Text(self.upgrade.name, (self.position[0], self.position[1] - int(140 * UI_SCALE)),
+                         font_size=int(40 * UI_SCALE), colour=COLOR_BLACK)
         name_text.draw(screen)
 
         # Cost text
-        cost_text = Text(f"${self.upgrade.cost}", (self.position[0], self.position[1] + 150),
-                              font_size=32, colour=COLOR_BLACK)
+        cost_text = Text(f"${self.upgrade.cost}", (self.position[0], self.position[1] + int(150 * UI_SCALE)),
+                              font_size=int(32 * UI_SCALE), colour=COLOR_BLACK)
         cost_text.draw(screen)
 
         # Description text
-        desc_lines = self._wrap_text(self.upgrade.description, self.width - 30)
-        desc_y = self.position[1] - 20
+        desc_lines = self._wrap_text(self.upgrade.description, self.width - int(30 * UI_SCALE))
+        desc_y = self.position[1] - int(20 * UI_SCALE)
         for line in desc_lines:
             desc_line = Text(line, (self.position[0], desc_y),
-                             font_size=24, colour=COLOR_BLACK)
+                             font_size=int(24 * UI_SCALE), colour=COLOR_BLACK)
             desc_line.draw(screen)
-            desc_y += 28
+            desc_y += 28 * UI_SCALE  # Line spacing
 
     def is_clicked(self, event) -> bool:
         """Checks if the card was clicked."""
@@ -103,7 +103,7 @@ class UpgradeCard:
         parts = [part.strip().capitalize() for part in text.split(',')]
 
         lines = []
-        font = pygame.font.Font(None, 24)
+        font = pygame.font.Font(None, int(24 * UI_SCALE))
 
         for part in parts:
             words = part.split()
@@ -319,16 +319,18 @@ def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock,
         offered_upgrades = [u for u in upgrades if u.name in forced_upgrades]
 
 
-    card_spacing = 350
+    card_spacing = 350 * UI_SCALE
     start_x = WINDOW_WIDTH // 2 - card_spacing
 
     upgrade_cards = []
     for i, upgrade in enumerate(offered_upgrades):
         x_pos = start_x + (i * card_spacing)
-        upgrade_cards.append(UpgradeCard(upgrade, (x_pos, 360), 250, 350))
+        upgrade_cards.append(UpgradeCard(upgrade, (x_pos, int(360 * UI_SCALE)),
+                                         int(250 * UI_SCALE), int(350 * UI_SCALE)))
 
     # Buttons
-    quit_button = Button("Quit Game", (200, WINDOW_HEIGHT - 100), 200, 70,
+    quit_button = Button("Quit Game", (int(200 * UI_SCALE), WINDOW_HEIGHT - int(100 * UI_SCALE)),
+                         200, 70,
                          colour=COLOR_BLUE, font_size=32)
     buy_button = Button("Buy Selected Upgrades", (WINDOW_WIDTH // 2, WINDOW_HEIGHT - 100),
                         300, 70, colour=COLOR_GREEN, font_size=32)
