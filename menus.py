@@ -97,13 +97,13 @@ class HUD:
         self.flag: Flag = flag
 
         self.ammo_icon: pygame.Surface = AssetManager.get_image("assets/images/ammo_icon.png")
-        self.ammo_icon = pygame.transform.scale(self.ammo_icon, (18, 45))
+        self.ammo_icon = pygame.transform.scale(self.ammo_icon, (12 * UI_SCALE, 30 * UI_SCALE))
 
         self.heart_icon: pygame.Surface = AssetManager.get_image("assets/images/heart_icon.png")
-        self.heart_icon = pygame.transform.scale(self.heart_icon, (45, 45))
+        self.heart_icon = pygame.transform.scale(self.heart_icon, (30 * UI_SCALE, 30 * UI_SCALE))
 
         self.compass_icon: pygame.Surface = AssetManager.get_image("assets/images/compass_arrow.png")
-        self.compass_icon = pygame.transform.scale(self.compass_icon, (45, 45))
+        self.compass_icon = pygame.transform.scale(self.compass_icon, (30 * UI_SCALE, 30 * UI_SCALE))
 
         self.round = 1
 
@@ -122,11 +122,11 @@ class HUD:
 
         # Calculate health bar width based on current health
         health_ratio = self.player.health / self.player.max_health
-        health_bar_width = int(health_ratio * 300)
+        health_bar_width = int(health_ratio * 200 * UI_SCALE)
 
         # Red for missing health, green for current health
-        max_health_bar = pygame.Rect(15, 15, 300 , 30)
-        current_health_bar = pygame.Rect(15, 15, health_bar_width, 30)
+        max_health_bar = pygame.Rect(10 * UI_SCALE, 10 * UI_SCALE, 200 * UI_SCALE, 20 * UI_SCALE)
+        current_health_bar = pygame.Rect(10 * UI_SCALE, 10 * UI_SCALE, health_bar_width, 20 * UI_SCALE)
 
         # Draw health bar
         pygame.draw.rect(screen, COLOR_RED, max_health_bar)
@@ -147,25 +147,25 @@ class HUD:
         else:
             text = f"{current_ammo} / {max_ammo}"
 
-        ammo_text = Text(text, (83, 1017),
-                         font_size=72, colour=COLOR_BLUE, anchor="midleft")
+        ammo_text = Text(text, (int(55 * UI_SCALE) , 678 * UI_SCALE),
+                         font_size=int(48 * UI_SCALE), colour=COLOR_BLUE, anchor="midleft")
 
-        screen.blit(self.ammo_icon, (45, 990))
+        screen.blit(self.ammo_icon, (30 * UI_SCALE, 660 * UI_SCALE))
         ammo_text.draw(screen)
 
     def credit_counter(self, screen: pygame.Surface) -> None:
         """Draws the credit counter on the given surface."""
         current_credits = self.player.money
 
-        credit_text = Text(f"$ {current_credits}", (44, 945),
-                           font_size=72, colour=COLOR_BLUE, anchor="midleft")
+        credit_text = Text(f"$ {current_credits}", (int(29 * UI_SCALE), 630 * UI_SCALE),
+                           font_size=int(48 * UI_SCALE), colour=COLOR_BLUE, anchor="midleft")
         credit_text.draw(screen)
 
     def lives_counter(self, screen: pygame.Surface) -> None:
         """Draws the lives counter on the given surface."""
         current_lives = self.player.lives
         for i in range(current_lives):
-            screen.blit(self.heart_icon, (15 + i * 53, 60))
+            screen.blit(self.heart_icon, (int(10 + i * 35) * UI_SCALE, 40 * UI_SCALE))
 
     def reload_progress(self, screen: pygame.Surface) -> None:
         """Draws the reload progress bar on the given surface."""
@@ -177,11 +177,11 @@ class HUD:
 
         # Calculate progress bar width based on reload time
         reload_progress = progress / self.player.gun.reload_time
-        progress_bar_width = int(reload_progress * 100)
+        progress_bar_width = int(reload_progress * 100 * UI_SCALE)
 
-        bg_rect = pygame.Rect(0, 0, 100, 10)
+        bg_rect = pygame.Rect(0, 0, 100 * UI_SCALE, 10 * UI_SCALE)
         bg_rect.center = (WINDOW_WIDTH // 2, 645)
-        progress_rect = pygame.Rect(bg_rect.left, bg_rect.top, progress_bar_width, 10)
+        progress_rect = pygame.Rect(bg_rect.left, bg_rect.top, progress_bar_width, 10 * UI_SCALE)
 
         pygame.draw.rect(screen, COLOR_GREY, bg_rect)
         pygame.draw.rect(screen, COLOR_BLUE, progress_rect)
@@ -211,8 +211,8 @@ class HUD:
 
     def round_counter(self, screen: pygame.Surface) -> None:
         """Draws the round counter on the given surface."""
-        round_text = Text(f"Round: {self.round}", (WINDOW_WIDTH - 38, 52.5),
-                         font_size=48, colour=COLOR_BLUE, anchor="midright")
+        round_text = Text(f"Round: {self.round}", (WINDOW_WIDTH - 38 * UI_SCALE, 52.5 * UI_SCALE),
+                         font_size=int(48 * UI_SCALE), colour=COLOR_BLUE, anchor="midright")
         round_text.draw(screen)
 
 def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:

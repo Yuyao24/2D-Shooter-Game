@@ -330,20 +330,19 @@ def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock,
 
     # Buttons
     quit_button = Button("Quit Game", (int(200 * UI_SCALE), WINDOW_HEIGHT - int(100 * UI_SCALE)),
-                         200, 70,
-                         colour=COLOR_BLUE, font_size=32)
-    buy_button = Button("Buy Selected Upgrades", (WINDOW_WIDTH // 2, WINDOW_HEIGHT - 100),
-                        300, 70, colour=COLOR_GREEN, font_size=32)
-    skip_button = Button("Skip", (WINDOW_WIDTH - 200, WINDOW_HEIGHT - 100), 200, 70,
-                         colour=COLOR_BLUE, font_size=32)
+                         int(200 * UI_SCALE), int(70 * UI_SCALE), colour=COLOR_BLUE, font_size=int(32 * UI_SCALE))
+    buy_button = Button("Buy Selected Upgrades", (WINDOW_WIDTH // 2, WINDOW_HEIGHT - int(100 * UI_SCALE)),
+                        int(300 * UI_SCALE), int(70 * UI_SCALE), colour=COLOR_GREEN, font_size=int(32 * UI_SCALE))
+    skip_button = Button("Skip", (WINDOW_WIDTH - int(200 * UI_SCALE), WINDOW_HEIGHT - int(100 * UI_SCALE)), 
+                         int(200 * UI_SCALE), int(70 * UI_SCALE), colour=COLOR_BLUE, font_size=int(32 * UI_SCALE))
     buttons = [quit_button, buy_button, skip_button]
 
     # Buy Upgrades Text
-    buy_upgrades_text = Text("Buy Upgrades", (WINDOW_WIDTH // 2, 100),
-                             font_size=80, colour=COLOR_BLACK)
+    buy_upgrades_text = Text("Buy Upgrades", (WINDOW_WIDTH // 2, int(100 * UI_SCALE)),
+                             font_size=int(80 * UI_SCALE), colour=COLOR_BLACK)
 
     # Credits
-    credits_text = Text(f"Credits: ${player.money}", (30, 40), font_size=48,
+    credits_text = Text(f"Credits: ${player.money}", (int(30 * UI_SCALE), int(40 * UI_SCALE)), font_size=int(48 * UI_SCALE),
                         anchor="midleft", colour=COLOR_YELLOW)
 
     while True:
@@ -402,8 +401,8 @@ def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock,
 
         # Draw total cost if upgrades selected
         if selected_cards:
-            total_text = Text(f"Total: ${total_cost}", (WINDOW_WIDTH // 2, WINDOW_HEIGHT - 160),
-                              font_size=36,
+            total_text = Text(f"Total: ${total_cost}", (WINDOW_WIDTH // 2, WINDOW_HEIGHT - int(160 * UI_SCALE)),
+                              font_size=int(36 * UI_SCALE),
                               colour=COLOR_GREEN if player.money >= total_cost else COLOR_RED)
             total_text.draw(screen)
 
