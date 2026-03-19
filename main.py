@@ -1,6 +1,6 @@
 import sys
 import pygame
-from settings import WINDOW_WIDTH, WINDOW_HEIGHT, save_data_exists, clear_save_data, save_game_data
+from settings import UI_SCALE, WINDOW_WIDTH, WINDOW_HEIGHT, save_data_exists, clear_save_data, save_game_data
 from gameplay import gameplay_loop
 from menus import main_menu, pause_menu, game_over_menu
 
@@ -10,7 +10,7 @@ class Game:
         pygame.display.init()  # Initialize Pygame
         pygame.font.init()
         pygame.display.set_caption("Shooter Game")  # Set window title
-        self.screen: pygame.Surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))  # 16:9 aspect ratio
+        self.screen: pygame.Surface = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)  # 16:9 aspect ratio
         self.clock: pygame.time.Clock = pygame.time.Clock()  # Set up clock timer
 
         self.running: bool = True # Game loop flag

@@ -4,8 +4,11 @@ import json
 
 UI_SCALE = 1.5
 
-WINDOW_WIDTH = 1280 * UI_SCALE
-WINDOW_HEIGHT = 720 * UI_SCALE
+# Get current screen resolution
+pygame.display.init()
+info = pygame.display.Info()
+WINDOW_WIDTH = info.current_w / UI_SCALE
+WINDOW_HEIGHT = info.current_h / UI_SCALE
 WINDOW_CENTER = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
 
 TILE_SIZE = 64
@@ -54,8 +57,8 @@ class AllSprites(pygame.sprite.Group):
         
         :param target_pos: The position the camera should center on (usually the player).
         """
-        self.offset.x = int(target_pos[0] - WINDOW_WIDTH / 2)
-        self.offset.y = int(target_pos[1] - WINDOW_HEIGHT / 2)
+        self.offset.x = int(target_pos[0] - WINDOW_WIDTH * UI_SCALE // 2)
+        self.offset.y = int(target_pos[1] - WINDOW_HEIGHT * UI_SCALE // 2)
         
         # Sort by z_layer then by bottom Y for Y-sorting
         for sprite in sorted(self.sprites(), key=lambda s: (getattr(s, 'z_layer', 0), s.rect.bottom)):

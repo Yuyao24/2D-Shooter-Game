@@ -8,17 +8,17 @@ from flag import Flag
 class Button:
     """Button for menus."""
     def __init__(self, text: str, position: tuple[int, int], width: int, height: int,
-                 colour: str = COLOR_BLUE, font_size: int = int(50 * UI_SCALE)) -> None:
+                 colour: str = COLOR_BLUE, font_size: int = 50) -> None:
         self.text_content: str = text
-        self.position: tuple[int, int] = position
-        self.width: int = width
-        self.height: int = height
+        self.position: tuple[int, int] = (int(position[0] * UI_SCALE), int(position[1] * UI_SCALE))
+        self.width: int = int(width * UI_SCALE)
+        self.height: int = int(height * UI_SCALE)
         self.colour: str = colour
-        self.font_size: int = font_size
+        self.font_size: int = int(font_size * UI_SCALE)
 
         # Button rectangle
-        self.rect: pygame.Rect = pygame.Rect(position, (width, height))
-        self.rect.center = position
+        self.rect: pygame.Rect = pygame.Rect(self.position, (self.width, self.height))
+        self.rect.center = self.position
 
         # Text object
         self.text_obj: Text = Text(text, position, font_size, "#000000")
@@ -31,15 +31,15 @@ class Button:
         if self.is_clickable:
             if self.is_hovered():
                 pygame.draw.rect(screen, COLOR_WHITE, self.rect)
-                pygame.draw.rect(screen, self.colour, self.rect, 3) # Border
+                pygame.draw.rect(screen, self.colour, self.rect, int(3 * UI_SCALE)) # Border
                 self.text_obj.draw(screen)
             else:
                 pygame.draw.rect(screen, self.colour, self.rect)
-                pygame.draw.rect(screen, COLOR_BLACK, self.rect, 3) # Border
+                pygame.draw.rect(screen, COLOR_BLACK, self.rect, int(3 * UI_SCALE)) # Border
                 self.text_obj.draw(screen)
         else:
             pygame.draw.rect(screen, COLOR_GREY, self.rect)
-            pygame.draw.rect(screen, COLOR_BLACK, self.rect, 3)  # Border
+            pygame.draw.rect(screen, COLOR_BLACK, self.rect, int(3 * UI_SCALE))  # Border
             self.text_obj.draw(screen)
 
     def is_clicked(self, event: pygame.event.Event) -> bool: 
@@ -57,33 +57,33 @@ class Button:
 
 class Text:
     """Text label."""
-    def __init__(self, text: str, position: tuple[int, int], font_size: int = int(50 * UI_SCALE),
+    def __init__(self, text: str, position: tuple[int, int], font_size: int = 50,
                  colour: str | tuple[int, int, int] = "#000000", anchor: str = "center") -> None:
         self.text: str = text
-        self.position: tuple[int, int] = position
-        self.font_size: int = font_size
+        self.position: tuple[int, int] = (int(position[0] * UI_SCALE), int(position[1] * UI_SCALE))
+        self.font_size: int = int(font_size * UI_SCALE)
         self.colour: str | tuple[int, int, int] = colour
         self.font: pygame.font.Font = pygame.font.Font(None, self.font_size)
 
         # Text surface and rect
         self.text_surf: pygame.Surface = self.font.render(text, True, colour)
-        self.text_rect: pygame.Rect = self.text_surf.get_rect(center=position)
+        self.text_rect: pygame.Rect = self.text_surf.get_rect(center=self.position)
 
         # Adjust text position based on anchor
         if anchor == "center":
-            self.text_rect.center = position
+            self.text_rect.center = self.position
         elif anchor == "topleft":
-            self.text_rect.topleft = position
+            self.text_rect.topleft = self.position
         elif anchor == "midleft":
-            self.text_rect.midleft = position
+            self.text_rect.midleft = self.position
         elif anchor == "topright":
-            self.text_rect.topright = position
+            self.text_rect.topright = self.position
         elif anchor == "midright":
-            self.text_rect.midright = position
+            self.text_rect.midright = self.position
         elif anchor == "bottomleft":
-            self.text_rect.bottomleft = position
+            self.text_rect.bottomleft = self.position
         elif anchor == "bottomright":
-            self.text_rect.bottomright = position
+            self.text_rect.bottomright = self.position
 
     def draw(self, screen: pygame.Surface) -> None:
         """Renders the text on the given surface."""
@@ -147,8 +147,8 @@ class HUD:
         else:
             text = f"{current_ammo} / {max_ammo}"
 
-        ammo_text = Text(text, (int(55 * UI_SCALE) , 678 * UI_SCALE),
-                         font_size=int(48 * UI_SCALE), colour=COLOR_BLUE, anchor="midleft")
+        ammo_text = Text(text, (55 , 678),
+                         font_size=int(48), colour=COLOR_BLUE, anchor="midleft")
 
         screen.blit(self.ammo_icon, (30 * UI_SCALE, 660 * UI_SCALE))
         ammo_text.draw(screen)
@@ -157,15 +157,15 @@ class HUD:
         """Draws the credit counter on the given surface."""
         current_credits = self.player.money
 
-        credit_text = Text(f"$ {current_credits}", (int(29 * UI_SCALE), 630 * UI_SCALE),
-                           font_size=int(48 * UI_SCALE), colour=COLOR_BLUE, anchor="midleft")
+        credit_text = Text(f"$ {current_credits}", (29, 630),
+                           font_size=48, colour=COLOR_BLUE, anchor="midleft")
         credit_text.draw(screen)
 
     def lives_counter(self, screen: pygame.Surface) -> None:
         """Draws the lives counter on the given surface."""
         current_lives = self.player.lives
         for i in range(current_lives):
-            screen.blit(self.heart_icon, (int(10 + i * 35) * UI_SCALE, 40 * UI_SCALE))
+            screen.blit(self.heart_icon, (int(10 + i * 35) * UI_SCALE, int(40 * UI_SCALE)))
 
     def reload_progress(self, screen: pygame.Surface) -> None:
         """Draws the reload progress bar on the given surface."""
@@ -180,7 +180,7 @@ class HUD:
         progress_bar_width = int(reload_progress * 100 * UI_SCALE)
 
         bg_rect = pygame.Rect(0, 0, 100 * UI_SCALE, 10 * UI_SCALE)
-        bg_rect.center = (WINDOW_WIDTH // 2, 645)
+        bg_rect.center = (WINDOW_WIDTH * UI_SCALE // 2, 645)
         progress_rect = pygame.Rect(bg_rect.left, bg_rect.top, progress_bar_width, 10 * UI_SCALE)
 
         pygame.draw.rect(screen, COLOR_GREY, bg_rect)
@@ -200,7 +200,8 @@ class HUD:
             direction = pygame.math.Vector2(0, 1) # Default to up if on top of flag
         direction = direction.normalize()
 
-        arrow_pos = pygame.math.Vector2(WINDOW_CENTER) + direction * 100
+        arrow_pos = (pygame.math.Vector2(WINDOW_WIDTH * UI_SCALE // 2, WINDOW_HEIGHT * UI_SCALE // 2)
+                     + direction * 100)
 
         # Rotate arrow to face flag
         rotation = direction.angle_to(pygame.math.Vector2(0, -1))
@@ -211,8 +212,8 @@ class HUD:
 
     def round_counter(self, screen: pygame.Surface) -> None:
         """Draws the round counter on the given surface."""
-        round_text = Text(f"Round: {self.round}", (WINDOW_WIDTH - 38 * UI_SCALE, 52.5 * UI_SCALE),
-                         font_size=int(48 * UI_SCALE), colour=COLOR_BLUE, anchor="midright")
+        round_text = Text(f"Round: {self.round}", (WINDOW_WIDTH - 38, 52.5),
+                         font_size=48, colour=COLOR_BLUE, anchor="midright")
         round_text.draw(screen)
 
 def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
@@ -233,15 +234,15 @@ def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
 
     # Create high-score text
     high_score_text = Text(f"High Score: {high_score}",
-                           (WINDOW_WIDTH // 2, int(120 * UI_SCALE)), font_size=int(100 * UI_SCALE), colour=COLOR_DARK_BLUE)
+                           (WINDOW_WIDTH // 2,120), font_size=100, colour=COLOR_DARK_BLUE)
 
     # Create buttons
-    resume_game_button = Button("Resume Game", (WINDOW_WIDTH // 2, int(300 * UI_SCALE)),
-                                int(300 * UI_SCALE), int(120 * UI_SCALE))
-    new_game_button = Button("New Game", (WINDOW_WIDTH // 2, int(450 * UI_SCALE)),
-                             int(300 * UI_SCALE), int(120 * UI_SCALE))
-    quit_button = Button("Quit", (WINDOW_WIDTH // 2, int(600 * UI_SCALE)),
-                         int(300 * UI_SCALE), int(120 * UI_SCALE))
+    resume_game_button = Button("Resume Game", (WINDOW_WIDTH // 2, 300),
+                                300, 120)
+    new_game_button = Button("New Game", (WINDOW_WIDTH // 2, 450),
+                             300, 120)
+    quit_button = Button("Quit", (WINDOW_WIDTH // 2, 600),
+                         300, 120)
     buttons = [resume_game_button, new_game_button, quit_button]
 
     while True:
@@ -300,18 +301,18 @@ def pause_menu(screen: pygame.Surface, clock: pygame.time.Clock,
     background = screen.copy()# Take screenshot of background
 
     # Game paused text
-    paused_text = Text("Game Paused", (WINDOW_WIDTH // 2, int(150 * UI_SCALE)),
-                       font_size=int(100 * UI_SCALE), colour=COLOR_DARK_BLUE)
+    paused_text = Text("Game Paused", (WINDOW_WIDTH // 2, 150),
+                       font_size=100, colour=COLOR_DARK_BLUE)
 
     # Create buttons
-    resume_button = Button("Resume", (WINDOW_WIDTH // 2, int(325 * UI_SCALE)),
-                           int(300 * UI_SCALE), int(120 * UI_SCALE))
-    quit_button = Button("Save and Quit", (WINDOW_WIDTH // 2, int(470 * UI_SCALE)),
-                         int(300 * UI_SCALE), int(120 * UI_SCALE))
+    resume_button = Button("Resume", (WINDOW_WIDTH // 2, 325),
+                           300 , 120)
+    quit_button = Button("Save and Quit", (WINDOW_WIDTH // 2, 470),
+                         300, 120)
     buttons = [resume_button, quit_button]
 
     # Create a transparent overlay
-    overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+    overlay = pygame.Surface((WINDOW_WIDTH * UI_SCALE, WINDOW_HEIGHT * UI_SCALE))
     overlay.set_alpha(128)  # 0 : transparent, 255 : opaque
     overlay.fill((0, 0, 0))  # Black tint
 
@@ -361,22 +362,22 @@ def game_over_menu(screen: pygame.Surface, clock: pygame.time.Clock, game_over_s
     pygame.mouse.set_visible(True)
 
     # Game over text
-    game_over_text = Text("Game Over", (WINDOW_WIDTH // 2, int(100 * UI_SCALE)),
-                          font_size=int(100 * UI_SCALE), colour=COLOR_RED)
+    game_over_text = Text("Game Over", (WINDOW_WIDTH // 2, 100),
+                          font_size=100, colour=COLOR_RED)
 
     # Game over stats
-    score_text = Text(f"Score: {game_over_stats['Score']}", (WINDOW_WIDTH // 2, int(185 * UI_SCALE)),
-                      font_size=int(85 * UI_SCALE), colour=COLOR_DARK_BLUE)
-    round_text = Text(f"Rounds Completed: {game_over_stats['Rounds']}", (WINDOW_WIDTH // 2, int(270 * UI_SCALE)),
-                      font_size=int(48 * UI_SCALE), colour=COLOR_DARK_BLUE)
-    kills_text = Text(f"Enemies Killed: {game_over_stats['Kills']}", (WINDOW_WIDTH // 2, int(320 * UI_SCALE)),
-                      font_size=int(48 * UI_SCALE), colour=COLOR_DARK_BLUE)
-    flag_text = Text(f"Flags Planted: {game_over_stats['Flags']}", (WINDOW_WIDTH // 2, int(370 * UI_SCALE)),
-                     font_size=int(48 * UI_SCALE), colour=COLOR_DARK_BLUE)
-    upgrades_text = Text(f"Upgrades Purchased: {game_over_stats['Upgrades']}", (WINDOW_WIDTH // 2, int(420 * UI_SCALE)),
-                         font_size=int(48 * UI_SCALE), colour=COLOR_DARK_BLUE)
-    money_text = Text(f"Money Spent: ${game_over_stats['Money']}", (WINDOW_WIDTH // 2, int(470 * UI_SCALE)),
-                        font_size=int(48 * UI_SCALE), colour=COLOR_DARK_BLUE)
+    score_text = Text(f"Score: {game_over_stats['Score']}", (WINDOW_WIDTH // 2, 185),
+                      font_size=85, colour=COLOR_DARK_BLUE)
+    round_text = Text(f"Rounds Completed: {game_over_stats['Rounds']}", (WINDOW_WIDTH // 2, 270),
+                      font_size=48, colour=COLOR_DARK_BLUE)
+    kills_text = Text(f"Enemies Killed: {game_over_stats['Kills']}", (WINDOW_WIDTH // 2, 320),
+                      font_size=48, colour=COLOR_DARK_BLUE)
+    flag_text = Text(f"Flags Planted: {game_over_stats['Flags']}", (WINDOW_WIDTH // 2, 370),
+                     font_size=48, colour=COLOR_DARK_BLUE)
+    upgrades_text = Text(f"Upgrades Purchased: {game_over_stats['Upgrades']}", (WINDOW_WIDTH // 2, 420),
+                         font_size=48, colour=COLOR_DARK_BLUE)
+    money_text = Text(f"Money Spent: ${game_over_stats['Money']}", (WINDOW_WIDTH // 2, 470),
+                        font_size=48, colour=COLOR_DARK_BLUE)
 
     # Update high score if needed
     score = game_over_stats['Score']
@@ -387,8 +388,8 @@ def game_over_menu(screen: pygame.Surface, clock: pygame.time.Clock, game_over_s
             score_file.write(str(score))
 
     # Create buttons
-    main_menu_button = Button("Main Menu", (WINDOW_WIDTH // 2, int(600 * UI_SCALE)),
-                              int(300 * UI_SCALE), int(120 * UI_SCALE))
+    main_menu_button = Button("Main Menu", (WINDOW_WIDTH // 2, 600),
+                              300, 120)
     buttons = [main_menu_button]
 
     while True:
@@ -437,21 +438,21 @@ def confirmation_menu(screen: pygame.Surface, clock: pygame.time.Clock,
 
     pygame.mouse.set_visible(True)
     # Dialog box
-    dialog_rect = pygame.Rect(0, 0, int(640 * UI_SCALE), int(360 * UI_SCALE))
-    dialog_rect.center = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
+    dialog_rect = pygame.Rect(0, 0, int(640 * UI_SCALE), (360 * UI_SCALE))
+    dialog_rect.center = (int(WINDOW_WIDTH // 2 * UI_SCALE), int(WINDOW_HEIGHT // 2 * UI_SCALE))
     
     # Create dialog text
-    wrapped_message = wrap_text(message, int(650 * UI_SCALE), int(48 * UI_SCALE))
+    wrapped_message = wrap_text(message, 650, 48)
     text_objects = []
     for i, line in enumerate(wrapped_message):
-        text_objects.append(Text(line, (WINDOW_WIDTH // 2, int(240 * UI_SCALE) + i * int(60 * UI_SCALE)),
-                                 font_size=int(48 * UI_SCALE), colour=COLOR_BLACK))
+        text_objects.append(Text(line, (WINDOW_WIDTH // 2, 240 + i * 60),
+                                 font_size=48, colour=COLOR_BLACK))
 
     # Create buttons
-    confirm_button = Button(confirm_message, (WINDOW_WIDTH // 2 + int(125 * UI_SCALE), int(440 * UI_SCALE)),
-                            int(150 * UI_SCALE), int(80 * UI_SCALE))
-    cancel_button = Button(decline_message, (WINDOW_WIDTH // 2 - int(125 * UI_SCALE), int(440 * UI_SCALE)),
-                           int(150 * UI_SCALE), int(80 * UI_SCALE))
+    confirm_button = Button(confirm_message, (WINDOW_WIDTH // 2 + 125, 440),
+                            150, 80)
+    cancel_button = Button(decline_message, (WINDOW_WIDTH // 2 - 125, 440),
+                           150, 80)
     buttons = [confirm_button, cancel_button]
 
     while True:

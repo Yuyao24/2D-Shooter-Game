@@ -29,14 +29,14 @@ class UpgradeCard:
     def __init__(self, upgrade: Upgrade, position: tuple,
                  width: int, height: int) -> None:
         self.upgrade = upgrade
-        self.position = position
-        self.width = width
-        self.height = height
+        self.position = (int(position[0] * UI_SCALE), int(position[1] * UI_SCALE))
+        self.width = int(width * UI_SCALE)
+        self.height = int(height * UI_SCALE)
         self.selected: bool = False
 
         # Card rect
-        self.rect: pygame.Rect = pygame.Rect(0, 0, width, height)
-        self.rect.center = position
+        self.rect: pygame.Rect = pygame.Rect(0, 0, self.width, self.height)
+        self.rect.center = self.position
 
         tier_colors: dict = {
             1: "#87CEEB",  # Common - Light Blue
@@ -54,6 +54,22 @@ class UpgradeCard:
         self.color = tier_colors[upgrade.tier]
         self.border_color = border_color[upgrade.tier]
 
+        # Draw upgrade name at top
+        self.name_text = Text(self.upgrade.name, (position[0], position[1] - 140),
+                         font_size=40, colour=COLOR_BLACK)
+
+        # Cost text
+        self.cost_text = Text(f"${self.upgrade.cost}", (position[0], position[1] + 150),
+                              font_size=32, colour=COLOR_BLACK)
+
+        # Description text
+        wrapped_desc = self._wrap_text(self.upgrade.description, self.width - 30)
+        self.desc_lines = []
+        for i, line in enumerate(wrapped_desc):
+            self.desc_lines.append(Text(line, (position[0], (position[1] - int(20) + (i * 28))),
+                             font_size=24, colour=COLOR_BLACK))
+
+
     def draw(self, screen) -> None:
         """Draws the upgrade card."""
 
@@ -63,26 +79,13 @@ class UpgradeCard:
 
         if self.selected:
             # Highlighted border effect
-            pygame.draw.rect(screen, COLOR_BLACK, self.rect.inflate(int(10 * UI_SCALE), int(10 * UI_SCALE)), int(5 * UI_SCALE))
+            pygame.draw.rect(screen, COLOR_BLACK, self.rect.inflate(int(12 * UI_SCALE), int(12 * UI_SCALE)), int(6 * UI_SCALE))
 
-        # Draw upgrade name at top
-        name_text = Text(self.upgrade.name, (self.position[0], self.position[1] - int(140 * UI_SCALE)),
-                         font_size=int(40 * UI_SCALE), colour=COLOR_BLACK)
-        name_text.draw(screen)
-
-        # Cost text
-        cost_text = Text(f"${self.upgrade.cost}", (self.position[0], self.position[1] + int(150 * UI_SCALE)),
-                              font_size=int(32 * UI_SCALE), colour=COLOR_BLACK)
-        cost_text.draw(screen)
-
-        # Description text
-        desc_lines = self._wrap_text(self.upgrade.description, self.width - int(30 * UI_SCALE))
-        desc_y = self.position[1] - int(20 * UI_SCALE)
-        for line in desc_lines:
-            desc_line = Text(line, (self.position[0], desc_y),
-                             font_size=int(24 * UI_SCALE), colour=COLOR_BLACK)
+        # Draw name, cost, description
+        self.name_text.draw(screen)
+        self.cost_text.draw(screen)
+        for desc_line in self.desc_lines:
             desc_line.draw(screen)
-            desc_y += 28 * UI_SCALE  # Line spacing
 
     def is_clicked(self, event) -> bool:
         """Checks if the card was clicked."""
@@ -319,30 +322,30 @@ def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock,
         offered_upgrades = [u for u in upgrades if u.name in forced_upgrades]
 
 
-    card_spacing = 350 * UI_SCALE
+    card_spacing = 350
     start_x = WINDOW_WIDTH // 2 - card_spacing
 
     upgrade_cards = []
     for i, upgrade in enumerate(offered_upgrades):
         x_pos = start_x + (i * card_spacing)
-        upgrade_cards.append(UpgradeCard(upgrade, (x_pos, int(360 * UI_SCALE)),
-                                         int(250 * UI_SCALE), int(350 * UI_SCALE)))
+        upgrade_cards.append(UpgradeCard(upgrade, (x_pos, 360),
+                                         250, 350))
 
     # Buttons
-    quit_button = Button("Quit Game", (int(200 * UI_SCALE), WINDOW_HEIGHT - int(100 * UI_SCALE)),
-                         int(200 * UI_SCALE), int(70 * UI_SCALE), colour=COLOR_BLUE, font_size=int(32 * UI_SCALE))
-    buy_button = Button("Buy Selected Upgrades", (WINDOW_WIDTH // 2, WINDOW_HEIGHT - int(100 * UI_SCALE)),
-                        int(300 * UI_SCALE), int(70 * UI_SCALE), colour=COLOR_GREEN, font_size=int(32 * UI_SCALE))
-    skip_button = Button("Skip", (WINDOW_WIDTH - int(200 * UI_SCALE), WINDOW_HEIGHT - int(100 * UI_SCALE)), 
-                         int(200 * UI_SCALE), int(70 * UI_SCALE), colour=COLOR_BLUE, font_size=int(32 * UI_SCALE))
+    quit_button = Button("Quit Game", (200, WINDOW_HEIGHT - 100),
+                         200, 70, colour=COLOR_BLUE, font_size=32)
+    buy_button = Button("Buy Selected Upgrades", (WINDOW_WIDTH // 2, WINDOW_HEIGHT - 100),
+                        300, 70, colour=COLOR_GREEN, font_size=32)
+    skip_button = Button("Skip", (WINDOW_WIDTH - 200, WINDOW_HEIGHT - 100),
+                         200, 70, colour=COLOR_BLUE, font_size=32)
     buttons = [quit_button, buy_button, skip_button]
 
     # Buy Upgrades Text
-    buy_upgrades_text = Text("Buy Upgrades", (WINDOW_WIDTH // 2, int(100 * UI_SCALE)),
-                             font_size=int(80 * UI_SCALE), colour=COLOR_BLACK)
+    buy_upgrades_text = Text("Buy Upgrades", (WINDOW_WIDTH // 2, 100),
+                             font_size=80, colour=COLOR_BLACK)
 
     # Credits
-    credits_text = Text(f"Credits: ${player.money}", (int(30 * UI_SCALE), int(40 * UI_SCALE)), font_size=int(48 * UI_SCALE),
+    credits_text = Text(f"Credits: ${player.money}", (30, 40), font_size=48,
                         anchor="midleft", colour=COLOR_YELLOW)
 
     while True:
@@ -401,8 +404,8 @@ def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock,
 
         # Draw total cost if upgrades selected
         if selected_cards:
-            total_text = Text(f"Total: ${total_cost}", (WINDOW_WIDTH // 2, WINDOW_HEIGHT - int(160 * UI_SCALE)),
-                              font_size=int(36 * UI_SCALE),
+            total_text = Text(f"Total: ${total_cost}", (WINDOW_WIDTH // 2, WINDOW_HEIGHT - 160),
+                              font_size=36,
                               colour=COLOR_GREEN if player.money >= total_cost else COLOR_RED)
             total_text.draw(screen)
 
