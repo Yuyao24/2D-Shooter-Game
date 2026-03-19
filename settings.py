@@ -140,34 +140,16 @@ def save_game_data(round_number: int, player, stats_manager,
     with open("game_save/save_data.txt", "w") as f:
         json.dump(data, f, indent=4)
 
-<<<<<<< HEAD
-def load_save() -> dict:
-    """
-    Loads the game state from the save file.
-    :return: A dictionary containing the saved game state.
-=======
 def load_game_data() -> dict:
     """
     Loads the game state from a file.
 
     :return: A dictionary containing the loaded game data.
->>>>>>> 0b95d3e6c2be3adaac8ff41900c3aad9c8eb5925
     """
     with open("game_save/save_data.txt", "r") as f:
         data = json.load(f)
     return data
 
-<<<<<<< HEAD
-def apply_save_data(data: dict, player, stats_manager) -> list[dict]:
-    """
-    Applies the loaded save data to the player and stats manager objects.
-
-    :param data: The dictionary containing the saved game state.
-    :param player: The player object to apply the stats to.
-    :param stats_manager: The stats manager object to apply the stats to.
-    :return: The round number loaded from the save data.
-    """
-=======
 def apply_save_data(data: dict, player, stats_manager) -> None:
     """
     Applies loaded game data to the player and stats manager objects.
@@ -177,18 +159,12 @@ def apply_save_data(data: dict, player, stats_manager) -> None:
     :param stats_manager: The stats manager object to apply the data to.
     """
     # Apply round and upgrade menu state
->>>>>>> 0b95d3e6c2be3adaac8ff41900c3aad9c8eb5925
     p = data["player"]
     g = data["gun"]
     s = data["stats_manager"]
 
-<<<<<<< HEAD
-    # Apply player stats
-    player.health = p["health"]
-=======
     # Player stats
     player.health = p["max_health"]  # Set current health to max health
->>>>>>> 0b95d3e6c2be3adaac8ff41900c3aad9c8eb5925
     player.max_health = p["max_health"]
     player.lives = p["lives"]
     player.money = p["money"]
@@ -200,26 +176,16 @@ def apply_save_data(data: dict, player, stats_manager) -> None:
     player.has_adrenaline = p["has_adrenaline"]
     player.has_auto_shoot = p["has_auto_shoot"]
     player.adrenaline = p["adrenaline"]
-<<<<<<< HEAD
-    
-    # Apply gun stats
-=======
 
     # Gun stats
->>>>>>> 0b95d3e6c2be3adaac8ff41900c3aad9c8eb5925
     player.gun.damage = g["damage"]
     player.gun.fire_rate = g["fire_rate"]
     player.gun.range = g["range"]
     player.gun.bullet_speed = g["bullet_speed"]
-<<<<<<< HEAD
-    player.gun.ammo = g["ammo"]
-    player.gun.max_ammo = g["max_ammo"]
-=======
     player.gun.ammo = g["max_ammo"]  # Set current ammo to max ammo
     player.gun.max_ammo = g["max_ammo"]
     player.gun.reload_time = g["reload_time"]
     player.gun.insta_reload_chance = g["insta_reload_chance"]
->>>>>>> 0b95d3e6c2be3adaac8ff41900c3aad9c8eb5925
     player.gun.ammo_saver_chance = g["ammo_saver_chance"]
     player.gun.piercing = g["piercing"]
     player.gun.insta_kill_chance = g["insta_kill_chance"]
@@ -227,20 +193,10 @@ def apply_save_data(data: dict, player, stats_manager) -> None:
     player.gun.trinity = g["trinity"]
     player.gun.auto_shoot = g["auto_shoot"]
 
-<<<<<<< HEAD
-    # Apply stats manager data
-=======
     # Stats manager data
->>>>>>> 0b95d3e6c2be3adaac8ff41900c3aad9c8eb5925
     stats_manager.score = s["score"]
     stats_manager.enemies_killed = s["enemies_killed"]
     stats_manager.rounds_completed = s["rounds_completed"]
     stats_manager.flags_planted = s["flags_planted"]
     stats_manager.upgrades_purchased = s["upgrades_purchased"]
-<<<<<<< HEAD
     stats_manager.money_spent = s["money_spent"]
-
-    return data["round_number"], data["in_upgrade_menu"], data["offered_upgrades"]
-=======
-    stats_manager.money_spent = s["money_spent"]
->>>>>>> 0b95d3e6c2be3adaac8ff41900c3aad9c8eb5925
