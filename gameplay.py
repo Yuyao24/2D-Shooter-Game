@@ -45,7 +45,6 @@ class RoundManager:
         self.crosshair_img = pygame.image.load("assets/images/crosshair.png").convert_alpha()
         self.crosshair_rect = self.crosshair_img.get_rect()
 
-        self.start_game()
 
     def update(self, dt) -> str:
         """
@@ -112,7 +111,7 @@ class RoundManager:
         self.show_message(f"ROUND {self.round_number}", 2000)
         return None
 
-    def start_game(self) -> None:
+    def start_game(self, message: bool = True) -> None:
         """
         Initializes the game state for the first round, including:
         loading the map, spawning the player, flag, and enemies.
@@ -145,7 +144,8 @@ class RoundManager:
         self.hud = HUD(self.player, self.flag)
 
         # Show start message
-        self.show_message(f"ROUND {self.round_number}", 2000)
+        if message:
+            self.show_message(f"ROUND {self.round_number}", 2000)
 
     def spawn_group(self, position, count):
         for i in range(count):
@@ -304,6 +304,7 @@ class RoundManager:
                     died = enemy.take_damage(damage)
 
                 enemy.active = True
+                enemy.target = self.player  # Change target to player if going to flag
 
                 if died:
                     enemy.kill()
@@ -343,6 +344,17 @@ class RoundManager:
                             self.stats_manager.update_kills()
                             self.stats_manager.update_score(50)
 
+    def load_from_save(self, save_data: dict) -> None:
+        """
+        Loads the game state from a save file.
+
+        :param save_data: A dictionary containing the saved game data.
+        """
+        # Apply save data to player and stats manager
+        apply_save_data(save_data, self.player, self.stats_manager)
+
+        self.round_number = save_data["round_number"]
+        self.hud.round = self.round_number
 
 def load_map(all_sprites: pygame.sprite.Group, collision_sprites: pygame.sprite.Group):
     """
@@ -385,18 +397,35 @@ def bullet_enemy_mask_collide(bullet: pygame.sprite.Sprite, enemy: pygame.sprite
     offset = (bullet.rect.left - enemy.rect.left, bullet.rect.top - enemy.rect.top)
     return enemy.mask.overlap(bullet.mask, offset) is not None
 
-def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
+def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock,
+                  resume: bool = False) -> str:
     """
     The main gameplay loop where the game action takes place.
     
     :param screen: The surface to draw the game on.
     :param clock: The clock to control the frame rate.
+    :param resume: Whether to resume from a save file.
     :return: The next game state (e.g., "QUIT", "MAIN_MENU").
     """
 
     pygame.mouse.set_visible(False)
 
+    # Initialize round manager
     round_manager = RoundManager(screen, clock)
+    round_manager.start_game(message = not resume)  # Don't show "ROUND 1" message if resuming
+
+    if resume:
+        save_data = load_game_data()
+        if save_data:  # Double check that save data exists before loading
+            round_manager.load_from_save(save_data)
+
+        # If the player was in upgrade menu when quitting, open the upgrade menu again
+        if save_data["in_upgrade_menu"]:
+            next_state = upgrade_menu(screen, clock, round_manager.round_number,
+                                      round_manager.player, round_manager.stats_manager,
+                                      forced_upgrades=save_data["offered_upgrades"])
+            if next_state == "MAIN_MENU":
+                return "MAIN_MENU", round_manager.stats_manager.get_stats()
 
     mouse_screen_pos = pygame.math.Vector2(pygame.mouse.get_pos())
     paused = False
