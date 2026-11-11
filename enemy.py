@@ -124,7 +124,7 @@ class BaseEnemy(pygame.sprite.Sprite):
         self.attack_range: int = 64
 
         # Rewards
-        self.money_reward: int = 10
+        self.money_reward: int = 15
         self.score_reward: int = 50
 
     def update(self, dt: float) -> None:
@@ -270,7 +270,8 @@ class BaseEnemy(pygame.sprite.Sprite):
         FX.burst(center, [self.frames["color"], (255, 255, 255)], count=16, speed=(100, 320),
                  lifetime=(0.3, 0.7), size=(4, 8))
         FX.ring(center, 50, (255, 255, 255), 0.3, 5)
-        FX.text((center[0], self.rect.top), f"+${self.money_reward}", (255, 215, 0), 30, 0.9)
+        reward = int(self.money_reward * self.player.money_mult)  # What the player actually receives
+        FX.text((center[0], self.rect.top), f"+${reward}", (255, 215, 0), 30, 0.9)
         Audio.play("enemy_die", center)
         Audio.play("coin", center)
         self.kill()
@@ -292,6 +293,9 @@ class BaseEnemy(pygame.sprite.Sprite):
 
         damage_multiplier = 0.2 * ((round_number - 1) ** 0.7) * random.uniform(0.8, 1.2)  # Diminishing scaling
         self.damage *= (1 + damage_multiplier)
+
+        # Tougher enemies are worth more money (+10% each round)
+        self.money_reward = round(self.money_reward * (1 + 0.1 * (round_number - 1)))
 
 
 class MeleeEnemy(BaseEnemy):
@@ -362,7 +366,7 @@ class BruteEnemy(MeleeEnemy):
         self.animation_speed = 4.0
 
         # Rewards
-        self.money_reward = 40
+        self.money_reward = 50
         self.score_reward = 150
 
     def attack(self) -> None:
@@ -389,10 +393,10 @@ class RangedEnemy(BaseEnemy):
         self.max_health = self.health
         self.speed = random.randint(160, 220)
         self.attack_range = 320.0
-        self.damage = 15.0
+        self.damage = 12.0
 
         # Shooting
-        self.shoot_cooldown = 1500.0 # milliseconds
+        self.shoot_cooldown = 1800.0 # milliseconds
         self.last_shot_time = 0.0
         self.projectile_color: tuple[int, int, int] = MONSTERS[self.monster]["projectile"]
 
@@ -465,7 +469,7 @@ class EnemyBullet(pygame.sprite.Sprite):
 
         # Movement attributes
         self.direction: pygame.Vector2 = direction
-        self.speed: float = 500.0
+        self.speed: float = 420.0  # Slower than it used to be so it can be dodged
 
         # Damage
         self.damage: float = enemy.damage

@@ -76,7 +76,7 @@ class Flag(pygame.sprite.Sprite):
         # Defense mechanics
         self.timer: float = 60.0
         self.max_timer: float = 120.0
-        self.damage_per_hit: float = 2.0
+        self.damage_per_hit: float = 1.0
 
         # Outcome
         self.outcome: str | None = None  # "DEFENDED" or "DESTROYED"
