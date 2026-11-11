@@ -3,12 +3,15 @@ import pygame
 from settings import UI_SCALE, WINDOW_WIDTH, WINDOW_HEIGHT, save_data_exists, clear_save_data, save_game_data
 from gameplay import gameplay_loop
 from menus import main_menu, pause_menu, game_over_menu
+from sound import Audio
 
 class Game:
     """The main Game class that initializes and runs the game application."""
     def __init__(self) -> None:
+        pygame.mixer.pre_init(44100, -16, 2, 512)  # Small buffer = low sound latency
         pygame.display.init()  # Initialize Pygame
         pygame.font.init()
+        Audio.init()  # Sound effects and music (the game runs silently without an audio device)
         pygame.display.set_caption("Shooter Game")  # Set window title
         self.screen: pygame.Surface = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)  # 16:9 aspect ratio
         self.clock: pygame.time.Clock = pygame.time.Clock()  # Set up clock timer

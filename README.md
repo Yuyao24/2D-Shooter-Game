@@ -23,6 +23,11 @@ defend it until the timer runs out. Between rounds, spend your money on upgrades
   hit flashes, floating damage numbers and money rewards, death bursts, bullet impact
   sparks, explosion rings for area damage, dust while walking, screen shake, and a red
   vignette when you are hurt or low on health.
+- **Sound and music:** gunshots, reloads, footsteps, monster hits and deaths, coins, flag
+  and round jingles, UI clicks, plus menu and battle music. Monster sounds get quieter
+  the further away they are. Press `M` to mute.
+- **Polished UI:** a pixel font, UI-pack buttons with hover and press states,
+  rounded panels, and upgrade cards coloured by tier.
 - **Island map:** a hand-built arena surrounded by a forest and an animated sea with a
   proper coastline, plus grass, desert, ruins and snow areas.
 - **HUD:** a health bar that drains smoothly, lives, money, ammo and reload progress, the
@@ -32,9 +37,11 @@ defend it until the timer runs out. Between rounds, spend your money on upgrades
 - **Save and resume:** use *Save and Quit* in the pause menu to continue the run later.
   Your high score is kept between runs.
 
-| Main menu | Brutes and ranged monsters |
+| Main menu | Upgrade shop |
 | --- | --- |
-| ![Menu](docs/menu.png) | ![Brutes](docs/brutes.png) |
+| ![Menu](docs/menu.png) | ![Shop](docs/shop.png) |
+
+![Brutes and ranged monsters](docs/brutes.png)
 
 ## Installation
 
@@ -69,6 +76,7 @@ The game opens in fullscreen at your monitor's resolution.
 | Shoot | Left mouse button (hold it with the *Auto Clicker* upgrade) |
 | Reload | `R` |
 | Pause / resume | `Esc` |
+| Mute / unmute sound | `M` |
 
 ## How to play
 
@@ -102,13 +110,14 @@ gameplay.py        Gameplay loop, round management, spawning, map loading
 player.py          Player (movement, animation), Gun and Bullet
 enemy.py           Monster loading and animation; Melee, Ranged and Brute enemies; enemy projectiles
 flag.py            Flag site, planting, defense timer and waving flag animation
+sound.py           Sound effects and music (Audio)
 effects.py         Particles, floating text, muzzle flash, rings and screen shake (FX)
 map.py             Ground layer (animated tiles), map sprites, collision spatial hash, A* pathfinding
 menus.py           Buttons, text, HUD, menu background, main/pause/game-over menus
 upgrades.py        Upgrade definitions and the upgrade shop
 settings.py        Constants, asset cache, camera, save/load helpers
 stats_manager.py   Score and run statistics
-assets/            Images, sprite sheets and the Tiled map
+assets/            Images, sprite sheets, UI images, fonts, audio and the Tiled map
 game_save/         Save file and high score
 ```
 
@@ -138,6 +147,20 @@ Tile animations defined in Tiled (like the sea in `coast.tsx`) play in-game auto
 | Crosshair image | Kenney | [kenney.nl](https://kenney.nl/assets/crosshair-pack) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 | Heart image | Shlok Gupta | [itch.io](https://gamedevshlok.itch.io/heartpack) | Free |
 | Flag image | ankousse26 | [itch.io](https://ankousse26.itch.io/free-flag-with-animation) | Free |
+| UI buttons and panels (UI Pack) | Kenney | [OpenGameArt](https://opengameart.org/content/ui-pack) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Pixel font (`kenpixel_high`) | Kenney | [OpenGameArt](https://opengameart.org/content/kenney-fonts) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+
+### Audio
+
+| Sound | Creator | Source | License |
+| --- | --- | --- | --- |
+| Gunshot, hit, slam and explosion sounds (100 CC0 SFX) | rubberduck | [OpenGameArt](https://opengameart.org/content/100-cc0-sfx) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Reload, footstep and coin sounds (50 RPG sound effects) | Kenney | [OpenGameArt](https://opengameart.org/content/50-rpg-sound-effects) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Monster projectile and death sounds (Sci-fi sounds) | Kenney | [OpenGameArt](https://opengameart.org/content/sci-fi-sounds) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Flag, round and alert jingles (Interface sounds) | Kenney | [OpenGameArt](https://opengameart.org/content/interface-sounds) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Button click and hover sounds (UI Pack) | Kenney | [OpenGameArt](https://opengameart.org/content/ui-pack) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Menu music ("Town Theme RPG") | cynicmusic | [OpenGameArt](https://opengameart.org/content/town-theme-rpg) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Battle music ("Battle Theme A") | cynicmusic | [OpenGameArt](https://opengameart.org/content/battle-theme-a) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 
 ### Inspiration
 

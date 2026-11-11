@@ -2,6 +2,7 @@ import random
 import pygame
 from settings import AssetManager, make_silhouette
 from effects import FX
+from sound import Audio
 
 # Rows of the player sprite sheet (4 x 4 frames of 128 x 128 pixels)
 FACING_ROWS = {"down": 0, "left": 1, "right": 2, "up": 3}
@@ -95,6 +96,7 @@ class Player(pygame.sprite.Sprite):
             self.dust_timer -= dt
             if self.dust_timer <= 0:
                 FX.dust(self.hitbox.midbottom)
+                Audio.play("step")
                 self.dust_timer = 0.18
         else:
             self.frame_index = 0  # Standing still
@@ -155,6 +157,7 @@ class Player(pygame.sprite.Sprite):
 
         # Feedback: red flash, screen shake and a damage number
         self.hurt_timer = 0.15
+        Audio.play("hurt")
         FX.shake(6, 0.15)
         FX.text((self.rect.centerx, self.rect.top + 20), f"-{int(round(damage))}", (255, 80, 80), 30)
 
@@ -280,6 +283,7 @@ class Gun(pygame.sprite.Sprite):
 
         # Visual feedback
         self.recoil = 10.0
+        Audio.play("shoot")
         FX.muzzle(pygame.math.Vector2(player.rect.center) + (0, 14) + direction * 58,
                   direction.angle_to(pygame.math.Vector2(1, 0)))
         FX.shake(2, 0.05)
@@ -309,6 +313,7 @@ class Gun(pygame.sprite.Sprite):
 
         self.is_reloading = True
         self.reload_start_time = pygame.time.get_ticks()
+        Audio.play("reload")
 
     def update_reload(self):
         """Completes reload when the timer finishes."""
@@ -319,6 +324,7 @@ class Gun(pygame.sprite.Sprite):
         if current_time - self.reload_start_time >= self.reload_time:
             self.ammo = self.max_ammo
             self.is_reloading = False
+            Audio.play("reload_done")
 
 class Bullet(pygame.sprite.Sprite):
     """Represents a projectile fired by a gun."""

@@ -2,6 +2,7 @@ import pygame, random
 from settings import AssetManager, TILE_SIZE, make_silhouette
 from map import Pathfinder
 from effects import FX
+from sound import Audio
 
 # Monster sprite sheets: 4 columns x 2 rows of 192 x 192 frames.
 # Row 0 is the idle / walk cycle, row 1 is the attack cycle.
@@ -195,6 +196,7 @@ class BaseEnemy(pygame.sprite.Sprite):
         """Activates the enemy, showing a "!" the first time it notices the player."""
         if not self.active:
             FX.text((self.rect.centerx, self.rect.top), "!", (255, 220, 60), 42, 0.6)
+            Audio.play("alert", self.rect.center)
         self.active = True
 
     def pathfind(self) -> None:
@@ -268,6 +270,8 @@ class BaseEnemy(pygame.sprite.Sprite):
                  lifetime=(0.3, 0.7), size=(4, 8))
         FX.ring(center, 50, (255, 255, 255), 0.3, 5)
         FX.text((center[0], self.rect.top), f"+${self.money_reward}", (255, 215, 0), 30, 0.9)
+        Audio.play("enemy_die", center)
+        Audio.play("coin", center)
         self.kill()
 
     def distance_to_target(self) -> float:
@@ -366,6 +370,7 @@ class BruteEnemy(MeleeEnemy):
         super().attack()
         if self.last_attack_time != before:
             FX.shake(10, 0.25)
+            Audio.play("brute_slam", self.rect.center)
             FX.ring(self.hitbox.midbottom, 90, (230, 200, 160), 0.4, 6)
 
 
@@ -428,6 +433,7 @@ class RangedEnemy(BaseEnemy):
                 return
             bullet_direction = bullet_direction.normalize()
 
+            Audio.play("enemy_shoot", self.rect.center)
             EnemyBullet(self.rect.center, bullet_direction,
                         (self.all_sprites,), self.collision_sprites, self.target, self)
 

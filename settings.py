@@ -71,6 +71,51 @@ class AssetManager:
         return cls._cache[key]
 
 
+FONT_PATH = "assets/fonts/kenpixel_high.ttf"
+FONT_SCALE = 0.9  # The pixel font is a bit bigger than pygame's default font at the same size
+
+
+def get_font(size: int) -> pygame.font.Font:
+    """Returns the game's pixel font at the given size (cached)."""
+    size = max(8, int(size * FONT_SCALE))
+    return AssetManager.cached(("font", size), lambda: pygame.font.Font(FONT_PATH, size))
+
+
+def nine_slice(path: str, size: tuple[int, int], border: int,
+               tint: tuple[int, int, int] | None = None, brighten: int = 0) -> pygame.Surface:
+    """
+    Scales a UI image to any size without stretching its corners (9-slice scaling).
+
+    :param path: Path to the source image.
+    :param size: Wanted (width, height).
+    :param border: Size in pixels of the corners that are kept unscaled.
+    :param tint: Optional colour to multiply the image with.
+    :param brighten: Optional amount to brighten the image by (hover effects).
+    """
+    size = (max(int(size[0]), border * 2 + 1), max(int(size[1]), border * 2 + 1))
+
+    def build() -> pygame.Surface:
+        src = AssetManager.get_image(path)
+        sw, sh = src.get_size()
+        w, h = size
+        b = border
+        out = pygame.Surface(size, pygame.SRCALPHA)
+        # (source rect, destination rect) for the 9 pieces
+        cols = [(0, b, 0, b), (b, sw - 2 * b, b, w - 2 * b), (sw - b, b, w - b, b)]
+        rows = [(0, b, 0, b), (b, sh - 2 * b, b, h - 2 * b), (sh - b, b, h - b, b)]
+        for sx, sw_, dx, dw in cols:
+            for sy, sh_, dy, dh in rows:
+                piece = src.subsurface((sx, sy, sw_, sh_))
+                out.blit(pygame.transform.smoothscale(piece, (dw, dh)), (dx, dy))
+        if tint:
+            out.fill((*tint, 255), special_flags=pygame.BLEND_RGBA_MULT)
+        if brighten:
+            out.fill((brighten, brighten, brighten, 0), special_flags=pygame.BLEND_RGBA_ADD)
+        return out
+
+    return AssetManager.cached(("nine_slice", path, size, border, tint, brighten), build)
+
+
 def make_silhouette(surface: pygame.Surface, color: tuple[int, int, int]) -> pygame.Surface:
     """
     Returns a solid-coloured silhouette of a surface (used for hit flashes).

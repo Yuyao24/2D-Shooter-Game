@@ -5,6 +5,7 @@ from map import GroundLayer, DecorSprite, SmallSprite, TallSprite, RectSprite, C
 from player import Player
 from enemy import MeleeEnemy, RangedEnemy, BruteEnemy, EnemyBullet
 from effects import FX
+from sound import Audio
 from menus import pause_menu, Text, HUD
 from flag import Flag
 from stats_manager import StatsManager
@@ -54,6 +55,7 @@ class RoundManager:
         Updates all game entities, checks for enemy-bullet collisions,
         and checks if the round has ended.
         """
+        Audio.listener = pygame.math.Vector2(self.player.rect.center)
         self.all_sprites.update(dt)
         self.damage_enemies()
         return self.check_round_end()
@@ -209,7 +211,7 @@ class RoundManager:
         :param color: The color of the message text.
         """
         start_time = pygame.time.get_ticks()
-        font = pygame.font.Font(None, int(110 * UI_SCALE))
+        font = get_font(int(110 * UI_SCALE))
         label = font.render(message, True, color)
         shadow = font.render(message, True, COLOR_BLACK)
         screen_w, screen_h = self.screen.get_size()
@@ -252,10 +254,12 @@ class RoundManager:
         if self.flag.outcome == "DEFENDED":
             self.player.update_money(800)
             self.stats_manager.update_score(1000)
+            Audio.play("round_won")
             self.show_message(f"ROUND WON", 2000, color=COLOR_GREEN)
             return self.start_new_round()
         elif self.flag.outcome == "DESTROYED":
             self.player.update_money(300)
+            Audio.play("round_lost")
             self.show_message(f"ROUND LOST", 2000, color=COLOR_RED)
             return self.start_new_round()
 
@@ -263,6 +267,7 @@ class RoundManager:
             self.player.update_money(300)
             if self.flag.is_planted:
                 self.stats_manager.update_score(1000)
+            Audio.play("round_won")
             self.show_message(f"ROUND WON", 2000, color=COLOR_GREEN)
             return self.start_new_round()
 
@@ -270,6 +275,7 @@ class RoundManager:
         if self.player.health <= 0:
             self.player.lives -= 1
             # Check if player has lives left
+            Audio.play("round_lost")
             if self.player.lives <= 0:
                 self.show_message(f"GAME OVER", 2000, color=COLOR_RED)
                 return "GAME_OVER" # Game Lost
@@ -336,6 +342,7 @@ class RoundManager:
                     enemy.health = 0
                 else:
                     died = enemy.take_damage(damage)
+                Audio.play("enemy_hit", enemy.rect.center)
 
                 enemy.alert()
                 enemy.target = self.player  # Change target to player if going to flag
@@ -361,6 +368,7 @@ class RoundManager:
                 explosion_radius = 100
                 explosion_damage = bullet.damage * bullet.area_damage
                 FX.ring(bullet.rect.center, explosion_radius, (255, 160, 40), 0.3, 6)
+                Audio.play("explosion", bullet.rect.center)
                 FX.burst(bullet.rect.center, [(255, 200, 60), (255, 120, 30), (90, 90, 90)], count=14,
                          speed=(100, 300), lifetime=(0.2, 0.5), size=(4, 7))
                 for other_enemy in list(self.enemy_sprites):
@@ -466,6 +474,7 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock,
     """
 
     pygame.mouse.set_visible(False)
+    Audio.music("battle")
 
     # Initialize round manager
     round_manager = RoundManager(screen, clock)
@@ -499,6 +508,8 @@ def gameplay_loop(screen: pygame.Surface, clock: pygame.time.Clock,
                 mouse_screen_pos.update(event.pos)
 
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_m:
+                    Audio.toggle_mute()
                 if event.key == pygame.K_ESCAPE:
                     paused = True
                 if event.key == pygame.K_r:
