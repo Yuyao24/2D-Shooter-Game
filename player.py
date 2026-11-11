@@ -25,6 +25,7 @@ class Player(pygame.sprite.Sprite):
         self.animation_speed: float = 8.0  # Frames per second while walking
         self.dust_timer: float = 0.0
         self.hurt_timer: float = 0.0  # > 0 while the player flashes red after being hit
+        self.time_since_hit: float = 0.0  # Health regenerates after a few seconds out of combat
 
         # Player image
         self.image: pygame.Surface = self.animations["down"][0][0]
@@ -70,7 +71,17 @@ class Player(pygame.sprite.Sprite):
         """Updates the player state once per frame."""
         self.update_aim()
         self.handle_movement(dt)
+        self.regenerate(dt)
         self.animate(dt)
+
+    REGEN_DELAY = 3.0  # Seconds without taking damage before health regenerates
+    REGEN_RATE = 0.08  # Fraction of max health regenerated per second
+
+    def regenerate(self, dt: float) -> None:
+        """Slowly regenerates health when the player has not been hit for a while."""
+        self.time_since_hit += dt
+        if self.time_since_hit >= self.REGEN_DELAY and 0 < self.health < self.max_health:
+            self.health = min(self.max_health, self.health + self.max_health * self.REGEN_RATE * dt)
 
     def update_aim(self) -> None:
         """Updates the aim direction (towards the mouse) and the facing direction."""
@@ -192,6 +203,7 @@ class Player(pygame.sprite.Sprite):
         # Apply damage reduction from upgrades
         damage = amount * self.damage_mult
         self.health -= damage
+        self.time_since_hit = 0.0
 
         # Feedback: red flash, screen shake and a damage number
         self.hurt_timer = 0.15

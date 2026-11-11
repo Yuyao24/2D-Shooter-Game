@@ -89,9 +89,10 @@ The game opens in fullscreen at your monitor's resolution.
    - The timer reaches 0: **round won** (+$800, +1000 points).
    - The timer reaches 120 s: **round lost**.
 4. You also win a round by **killing every monster** on the map.
-5. **Dying** costs one life (you start with 5) and ends the round. Lose all your lives
+5. Your health **regenerates** after 3 seconds without taking damage.
+6. **Dying** costs one life (you start with 5) and ends the round. Lose all your lives
    and it's game over.
-6. Between rounds, **buy upgrades** with the money from kills and objectives. Each round,
+7. Between rounds, **buy upgrades** with the money from kills and objectives. Each round,
    enemies get more health and deal more damage.
 
 ### Upgrades
@@ -117,9 +118,23 @@ menus.py           Buttons, text, HUD, menu background, main/pause/game-over men
 upgrades.py        Upgrade definitions and the upgrade shop
 settings.py        Constants, asset cache, camera, save/load helpers
 stats_manager.py   Score and run statistics
+tools/simulate.py  Headless bot that plays games for testing and balancing
 assets/            Images, sprite sheets, UI images, fonts, audio and the Tiled map
 game_save/         Save file and high score
 ```
+
+## Simulating games (testing and balancing)
+
+`tools/simulate.py` plays full games headlessly with a simple bot. The bot walks to the flag,
+plants and defends it, shoots and dodges, and buys upgrades. Game time is simulated, so a
+whole game takes seconds. The script prints statistics as JSON: how each round ended,
+damage taken per enemy type, money, stuck enemies and real enemy speed.
+
+```bash
+python tools/simulate.py --games 5 --max-rounds 15 --seed 1
+```
+
+Use it after changing numbers like enemy damage or rewards, to see how the difficulty curve shifts.
 
 ## Editing the map
 
