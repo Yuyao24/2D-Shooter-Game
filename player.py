@@ -1,5 +1,10 @@
+import random
 import pygame
-from settings import AssetManager
+from settings import AssetManager, make_silhouette
+from effects import FX
+
+# Rows of the player sprite sheet (4 x 4 frames of 128 x 128 pixels)
+FACING_ROWS = {"down": 0, "left": 1, "right": 2, "up": 3}
 
 class Player(pygame.sprite.Sprite):
     """Represents the player-controlled entity."""
@@ -7,8 +12,21 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, position: tuple[int, int], groups: list[pygame.sprite.Group],
                  collision_sprites: pygame.sprite.Group) -> None:
         super().__init__(groups)
+        # Animation frames: facing -> list of (image, hurt-flash image, mask)
+        sheet = AssetManager.get_sheet("assets/images/player_sheet.png", 128, 128)
+        self.animations: dict[str, list[tuple[pygame.Surface, pygame.Surface, pygame.Mask]]] = {
+            facing: [(frame, make_silhouette(frame, (255, 70, 70)), pygame.mask.from_surface(frame))
+                     for frame in sheet[row]]
+            for facing, row in FACING_ROWS.items()
+        }
+        self.facing: str = "down"
+        self.frame_index: float = 0.0
+        self.animation_speed: float = 8.0  # Frames per second while walking
+        self.dust_timer: float = 0.0
+        self.hurt_timer: float = 0.0  # > 0 while the player flashes red after being hit
+
         # Player image
-        self.image: pygame.Surface = AssetManager.get_image("assets/images/player.png")
+        self.image: pygame.Surface = self.animations["down"][0][0]
         self.rect: pygame.FRect = self.image.get_frect(center=position)
         self.hitbox: pygame.Rect = self.rect.inflate(-60, -90)
         self.hitbox.midbottom = self.rect.midbottom
@@ -18,6 +36,7 @@ class Player(pygame.sprite.Sprite):
         # Movement attributes
         self.speed: int = 300
         self.direction: pygame.Vector2 = pygame.math.Vector2(0, 0)
+        self.aim: pygame.Vector2 = pygame.math.Vector2(0, 1)  # Unit vector towards the mouse
 
         # Sprite groups
         self.collision_sprites: pygame.sprite.Group = collision_sprites
@@ -48,7 +67,46 @@ class Player(pygame.sprite.Sprite):
 
     def update(self, dt: float) -> None:
         """Updates the player state once per frame."""
+        self.update_aim()
         self.handle_movement(dt)
+        self.animate(dt)
+
+    def update_aim(self) -> None:
+        """Updates the aim direction (towards the mouse) and the facing direction."""
+        mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + self.offset
+        aim = mouse_pos - pygame.math.Vector2(self.rect.center)
+        if aim.length() > 0:
+            self.aim = aim.normalize()
+
+        # Face the direction the player is aiming in
+        if abs(self.aim.x) > abs(self.aim.y):
+            self.facing = "right" if self.aim.x > 0 else "left"
+        else:
+            self.facing = "down" if self.aim.y > 0 else "up"
+
+    def animate(self, dt: float) -> None:
+        """Advances the walk animation and applies the hurt flash."""
+        frames = self.animations[self.facing]
+        if self.direction.length() > 0:
+            speed_ratio = self.speed / 300
+            self.frame_index = (self.frame_index + self.animation_speed * speed_ratio * dt) % len(frames)
+
+            # Kick up some dust while walking
+            self.dust_timer -= dt
+            if self.dust_timer <= 0:
+                FX.dust(self.hitbox.midbottom)
+                self.dust_timer = 0.18
+        else:
+            self.frame_index = 0  # Standing still
+
+        image, hurt_image, mask = frames[int(self.frame_index)]
+        if self.hurt_timer > 0:
+            self.hurt_timer -= dt
+            image = image.copy()
+            hurt_image.set_alpha(int(200 * min(1.0, self.hurt_timer / 0.15)))
+            image.blit(hurt_image, (0, 0))
+        self.image = image
+        self.mask = mask
 
     def handle_movement(self, dt: float) -> None:
         """Handles player input and movement with collision detection."""
@@ -76,7 +134,7 @@ class Player(pygame.sprite.Sprite):
 
     def collide(self, direction: str) -> None:
         """Handles collisions with obstacles."""
-        for obstacle in self.collision_sprites:
+        for obstacle in self.collision_sprites.near(self.hitbox):
             if obstacle.hitbox.colliderect(self.hitbox):
                 if direction == "horizontal":
                     if self.direction.x > 0: self.hitbox.right = obstacle.hitbox.left
@@ -92,7 +150,13 @@ class Player(pygame.sprite.Sprite):
     def take_damage(self, amount: float) -> None:
         """Reduces the player's health by the given amount, applying damage reduction."""
         # Apply damage reduction from upgrades
-        self.health -= amount * self.damage_mult
+        damage = amount * self.damage_mult
+        self.health -= damage
+
+        # Feedback: red flash, screen shake and a damage number
+        self.hurt_timer = 0.15
+        FX.shake(6, 0.15)
+        FX.text((self.rect.centerx, self.rect.top + 20), f"-{int(round(damage))}", (255, 80, 80), 30)
 
     def reset(self, new_position: tuple[float, float]) -> None:
         """
@@ -103,6 +167,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = new_position
         self.hitbox.midbottom = self.rect.midbottom
         self.direction = pygame.math.Vector2(0, 0)
+        self.hurt_timer = 0.0
 
         # Reset health to max (upgrades might have increased max_health)
         self.health = self.max_health
@@ -128,7 +193,9 @@ class Gun(pygame.sprite.Sprite):
         self.base_image_flipped: pygame.Surface = pygame.transform.flip(self.base_image, True, False)
         self.image: pygame.Surface = self.base_image
         self.rect: pygame.FRect = self.image.get_frect(center=self.player.rect.center)
-        self.z_layer: int = 2
+        self.z_layer: int = 1
+        self.sort_y: float | None = None  # Drawn just in front of / behind the player
+        self.recoil: float = 0.0  # Pixels the gun is pushed back after firing
 
         # Gun stats
         self.damage: float = 25.0
@@ -158,29 +225,35 @@ class Gun(pygame.sprite.Sprite):
         self.auto_shoot: bool = False
 
     def update(self, dt: float) -> None:
-        """Updates the gun's position and rotation based on the player's movement direction and mouse position."""
+        """Updates the gun's position and rotation based on where the player is aiming."""
 
         self.update_reload()
 
-        # Rotate gun to face mouse
-        mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos()) + self.player.offset
-        player_pos = pygame.math.Vector2(self.player.rect.center)
-        direction = mouse_pos - player_pos
-
-        if direction.length() > 0:
-            direction = direction.normalize()
+        direction = self.player.aim
 
         base_image = self.base_image
         aiming_left = direction.x < 0
         if aiming_left: # Flipped image if aiming left
             base_image = self.base_image_flipped
 
-        rotation = direction.angle_to(pygame.math.Vector2(1, 0)) # Rotate gun to direction of movement
+        rotation = direction.angle_to(pygame.math.Vector2(1, 0)) # Rotate gun to aim direction
         if aiming_left: # Flip rotation if aiming left
             rotation += 180
 
+        # Recoil pushes the gun back towards the player and recovers quickly
+        self.recoil = max(0.0, self.recoil - 120 * dt)
+
+        # Reloading: spin the gun once
+        if self.is_reloading:
+            progress = (pygame.time.get_ticks() - self.reload_start_time) / self.reload_time
+            rotation += 360 * min(1.0, progress) * (1 if aiming_left else -1)
+
         self.image = pygame.transform.rotate(base_image, rotation)
-        self.rect = self.image.get_frect(center=self.player.rect.center) # Update rect position
+        hand_pos = pygame.math.Vector2(self.player.rect.center) + (0, 14) + direction * (16 - self.recoil)
+        self.rect = self.image.get_frect(center=hand_pos) # Update rect position
+
+        # Draw the gun behind the player when aiming upwards, otherwise in front
+        self.sort_y = self.player.rect.bottom + (-1 if direction.y < -0.4 else 1)
 
     def shoot(self, player: Player, all_sprites: pygame.sprite.AbstractGroup,
               bullets: pygame.sprite.Group, collision_sprites: pygame.sprite.Group) -> None:
@@ -205,14 +278,18 @@ class Gun(pygame.sprite.Sprite):
 
         Bullet(position, direction, (all_sprites, bullets), collision_sprites, player)
 
+        # Visual feedback
+        self.recoil = 10.0
+        FX.muzzle(pygame.math.Vector2(player.rect.center) + (0, 14) + direction * 58,
+                  direction.angle_to(pygame.math.Vector2(1, 0)))
+        FX.shake(2, 0.05)
+
         # Apply ammo saver chance - randomly don't consume ammo
-        import random
         if random.random() > self.ammo_saver_chance:
             self.ammo -= 1
 
         if self.ammo <= 0:
             # Check for instant reload chance
-            import random
             if random.random() < self.insta_reload_chance:
                 self.ammo = self.max_ammo
                 return
@@ -298,7 +375,9 @@ class Bullet(pygame.sprite.Sprite):
 
     def check_collision(self) -> None:
         """Checks for collisions with obstacles and destroys the bullet on impact."""
-        if any(obstacle.hitbox.colliderect(self.rect) for obstacle in self.collision_sprites):
+        if any(obstacle.hitbox.colliderect(self.rect) for obstacle in self.collision_sprites.near(self.rect)):
+            FX.burst(self.rect.center, [(255, 230, 140), (255, 180, 60), (200, 200, 200)], count=6,
+                     speed=(60, 200), lifetime=(0.12, 0.3), size=(2, 4), direction=-self.direction, spread=140)
             self.kill()
     
     def check_range(self) -> None:
