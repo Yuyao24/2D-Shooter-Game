@@ -1,9 +1,10 @@
 import random
 from pytmx import load_pygame
 from settings import *
-from map import GroundTile, SmallSprite, TallSprite, RectSprite, Pathfinder
+from map import GroundLayer, DecorSprite, SmallSprite, TallSprite, RectSprite, CollisionGroup, Pathfinder
 from player import Player
-from enemy import MeleeEnemy, RangedEnemy
+from enemy import MeleeEnemy, RangedEnemy, BruteEnemy, EnemyBullet
+from effects import FX
 from menus import pause_menu, Text, HUD
 from flag import Flag
 from stats_manager import StatsManager
@@ -23,9 +24,11 @@ class RoundManager:
 
         # Sprite groups
         self.all_sprites = AllSprites()
-        self.collision_sprites = pygame.sprite.Group()
+        self.collision_sprites = CollisionGroup()
         self.enemy_sprites = pygame.sprite.Group()
         self.bullet_sprites = pygame.sprite.Group()
+        self.effect_sprites = pygame.sprite.Group()
+        FX.setup(self.all_sprites, self.effect_sprites)
 
         # Map data
         self.map_tmx = None
@@ -61,14 +64,18 @@ class RoundManager:
 
         :param mouse_screen_pos: Position of the mouse in screen coordinates
         """
-        self.screen.fill(COLOR_BLACK)
-        self.all_sprites.draw_with_offset(self.player.rect.center)
+        self.draw_world()
         self.hud.draw(self.screen)
 
         self.crosshair_rect.center = mouse_screen_pos
         self.screen.blit(self.crosshair_img, self.crosshair_rect)
 
         pygame.display.flip()
+
+    def draw_world(self) -> None:
+        """Draws the map and all entities (without HUD or flipping the display)."""
+        self.screen.fill(COLOR_BLACK)
+        self.all_sprites.draw_with_offset(self.player.rect.center)
 
     def start_new_round(self) -> None:
         """
@@ -89,6 +96,9 @@ class RoundManager:
             sprite.kill()
         for sprite in list(self.bullet_sprites):
             sprite.kill()
+        for sprite in [s for s in self.all_sprites if isinstance(s, EnemyBullet)]:
+            sprite.kill()
+        FX.clear()
 
         # Kill flag
         self.flag.kill()
@@ -148,13 +158,17 @@ class RoundManager:
             self.show_message(f"ROUND {self.round_number}", 2000)
 
     def spawn_group(self, position, count):
+        # Brutes appear from round 3 and get more common over time (max 20%)
+        brute_chance = 0.0 if self.round_number < 3 else min(0.2, 0.05 + 0.02 * (self.round_number - 3))
+
         for i in range(count):
             sx = position.x + random.randint(-100, 100)
             sy = position.y + random.randint(-100, 100)
 
-            # 2 melee : 1 ranged
+            # 2 melee : 1 ranged (some melee enemies are replaced by brutes in later rounds)
             if random.random() < (2/3):
-                MeleeEnemy((sx, sy), (self.all_sprites, self.enemy_sprites),
+                enemy_class = BruteEnemy if random.random() < brute_chance else MeleeEnemy
+                enemy_class((sx, sy), (self.all_sprites, self.enemy_sprites),
                            self.collision_sprites, self.player, self.flag, self.pathfinder)
             else:
                 RangedEnemy((sx, sy), (self.all_sprites, self.enemy_sprites),
@@ -189,20 +203,42 @@ class RoundManager:
 
     def show_message(self, message, duration_ms, color=COLOR_WHITE) -> None:
         """
-        Shows a message on the screen for the specified duration.
+        Shows a banner message over the (dimmed) game world for the specified duration.
         :param message: The message to display.
         :param duration_ms: The duration of the message in milliseconds.
         :param color: The color of the message text.
         """
         start_time = pygame.time.get_ticks()
+        font = pygame.font.Font(None, int(110 * UI_SCALE))
+        label = font.render(message, True, color)
+        shadow = font.render(message, True, COLOR_BLACK)
+        screen_w, screen_h = self.screen.get_size()
+        dim = pygame.Surface((screen_w, screen_h))
+        dim.fill(COLOR_BLACK)
+        band = pygame.Surface((screen_w, int(label.get_height() * 2.2)), pygame.SRCALPHA)
+        band.fill((0, 0, 0, 150))
 
         while pygame.time.get_ticks() - start_time < duration_ms:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     return
 
-            self.screen.fill(COLOR_BLACK)
-            Text(message, WINDOW_CENTER, 72, color).draw(self.screen)
+            elapsed = (pygame.time.get_ticks() - start_time) / duration_ms
+
+            # Animated world in the background (water, flag...), but entities are frozen
+            self.draw_world()
+            dim.set_alpha(int(110 + 60 * max(0.0, (elapsed - 0.85) / 0.15)))
+            self.screen.blit(dim, (0, 0))
+            self.screen.blit(band, band.get_rect(center=(screen_w // 2, screen_h // 2)))
+
+            # Pop-in, then hold, then fade out
+            scale = 1.0 + 0.6 * max(0.0, 1 - elapsed * 8) ** 2
+            alpha = int(255 * min(1.0, (1 - elapsed) * 6))
+            for surf, offset in ((shadow, (5, 5)), (label, (0, 0))):
+                scaled = pygame.transform.smoothscale_by(surf, scale)
+                scaled.set_alpha(alpha)
+                self.screen.blit(scaled, scaled.get_rect(center=(screen_w // 2 + offset[0],
+                                                                 screen_h // 2 + offset[1])))
 
             pygame.display.flip()
             self.clock.tick(60)
@@ -264,8 +300,6 @@ class RoundManager:
         Detects collisions between bullets and enemies, and deals damage to them.
         Kills enemies if health drops to 0.
         """
-        import random
-
         # Collision detection between bullets and enemies
         hits = pygame.sprite.groupcollide(self.bullet_sprites, self.enemy_sprites,
                                           False, False,
@@ -303,18 +337,16 @@ class RoundManager:
                 else:
                     died = enemy.take_damage(damage)
 
-                enemy.active = True
+                enemy.alert()
                 enemy.target = self.player  # Change target to player if going to flag
 
+                # Impact sparks in the direction the bullet was travelling
+                FX.burst(bullet.rect.center, [(255, 255, 255), (255, 220, 120)], count=5,
+                         speed=(80, 220), lifetime=(0.1, 0.25), size=(2, 4),
+                         direction=bullet.direction, spread=90)
+
                 if died:
-                    enemy.kill()
-                    self.player.update_money(10)
-                    # Apply life steal upgrade
-                    if self.player.life_steal > 0:
-                        self.player.health = min(self.player.health + self.player.life_steal,
-                                                 self.player.max_health)
-                    self.stats_manager.update_kills()
-                    self.stats_manager.update_score(50)
+                    self.kill_enemy(enemy)
 
                 # Mark that the bullet hit at least one enemy for piercing logic
                 bullet_hit_first_enemy = True
@@ -328,21 +360,33 @@ class RoundManager:
                 bullet.has_exploded = True
                 explosion_radius = 100
                 explosion_damage = bullet.damage * bullet.area_damage
-                for other_enemy in self.enemy_sprites:
+                FX.ring(bullet.rect.center, explosion_radius, (255, 160, 40), 0.3, 6)
+                FX.burst(bullet.rect.center, [(255, 200, 60), (255, 120, 30), (90, 90, 90)], count=14,
+                         speed=(100, 300), lifetime=(0.2, 0.5), size=(4, 7))
+                for other_enemy in list(self.enemy_sprites):
                     if id(other_enemy) not in bullet.enemies_hit and (
                                 pygame.math.Vector2(bullet.rect.center).
                                         distance_to(other_enemy.rect.center)
                                             <= explosion_radius):
                         other_enemy.take_damage(explosion_damage)
-                        other_enemy.active = True
+                        other_enemy.alert()
                         if other_enemy.health <= 0:
-                            other_enemy.kill()
-                            self.player.update_money(10)
-                            if self.player.life_steal > 0:
-                                self.player.health = min(self.player.health + self.player.life_steal,
-                                                         self.player.max_health)
-                            self.stats_manager.update_kills()
-                            self.stats_manager.update_score(50)
+                            self.kill_enemy(other_enemy)
+
+    def kill_enemy(self, enemy) -> None:
+        """
+        Kills an enemy and gives the player its rewards.
+
+        :param enemy: The enemy that died.
+        """
+        enemy.die()
+        self.player.update_money(enemy.money_reward)
+        # Apply life steal upgrade
+        if self.player.life_steal > 0:
+            self.player.health = min(self.player.health + self.player.life_steal,
+                                     self.player.max_health)
+        self.stats_manager.update_kills()
+        self.stats_manager.update_score(enemy.score_reward)
 
     def load_from_save(self, save_data: dict) -> None:
         """
@@ -356,7 +400,12 @@ class RoundManager:
         self.round_number = save_data["round_number"]
         self.hud.round = self.round_number
 
-def load_map(all_sprites: pygame.sprite.Group, collision_sprites: pygame.sprite.Group):
+        # Enemies were spawned before the round number was known: scale them now
+        # (scaling for round 1 leaves stats unchanged, so this is applied only once)
+        for enemy in self.enemy_sprites:
+            enemy.calculate_difficulty(self.round_number)
+
+def load_map(all_sprites: AllSprites, collision_sprites: pygame.sprite.Group):
     """
     Loads a map from a Tiled map file and creates sprite objects for each tile, object, and collision.
 
@@ -366,8 +415,8 @@ def load_map(all_sprites: pygame.sprite.Group, collision_sprites: pygame.sprite.
     """
     map_tmx = load_pygame("assets/map/world.tmx")
 
-    for x, y, image in map_tmx.get_layer_by_name("Ground").tiles():
-        GroundTile((x * TILE_SIZE, y * TILE_SIZE), image, (all_sprites,))
+    # Ground tiles (including the animated sea) are drawn by the camera directly
+    all_sprites.ground = GroundLayer(map_tmx, "Ground")
 
     for obj in map_tmx.get_layer_by_name("Rocks"):
         SmallSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
@@ -375,9 +424,17 @@ def load_map(all_sprites: pygame.sprite.Group, collision_sprites: pygame.sprite.
     for obj in map_tmx.get_layer_by_name("Objects"):
         TallSprite((obj.x, obj.y), obj.image, (all_sprites, collision_sprites))
 
+    # Purely decorative objects (grass, forest outside the arena)
+    try:
+        for obj in map_tmx.get_layer_by_name("Decor"):
+            DecorSprite((obj.x, obj.y), obj.image, (all_sprites,))
+    except ValueError:
+        pass  # Map has no decor layer
+
+    # Invisible collision areas only need to be in the collision group
     for obj in map_tmx.get_layer_by_name("Collisions"):
         RectSprite((obj.x, obj.y), pygame.Surface((obj.width, obj.height), pygame.SRCALPHA),
-                   (all_sprites, collision_sprites))
+                   (collision_sprites,))
 
     return map_tmx
 

@@ -1,6 +1,7 @@
 import pygame
 import os
 import json
+import random
 
 UI_SCALE = 1.5
 
@@ -29,6 +30,7 @@ COLOR_GOLD = "#FFD700"
 class AssetManager:
     """Manages game assets like images to ensure they are loaded only once."""
     _images: dict[str, pygame.Surface] = {}
+    _cache: dict[tuple, object] = {}
 
     @classmethod
     def get_image(cls, path: str) -> pygame.Surface:
@@ -42,27 +44,99 @@ class AssetManager:
             cls._images[path] = pygame.image.load(path).convert_alpha()
         return cls._images[path]
 
+    @classmethod
+    def get_sheet(cls, path: str, frame_w: int, frame_h: int) -> list[list[pygame.Surface]]:
+        """
+        Slices a sprite sheet into a grid of frames.
+
+        :param path: The file path to the sprite sheet.
+        :param frame_w: Width of a single frame in pixels.
+        :param frame_h: Height of a single frame in pixels.
+        :return: A list of rows, each row being a list of frame surfaces.
+        """
+        key = ("sheet", path, frame_w, frame_h)
+        if key not in cls._cache:
+            sheet = cls.get_image(path)
+            cols = sheet.get_width() // frame_w
+            rows = sheet.get_height() // frame_h
+            cls._cache[key] = [[sheet.subsurface((c * frame_w, r * frame_h, frame_w, frame_h)).copy()
+                                for c in range(cols)] for r in range(rows)]
+        return cls._cache[key]
+
+    @classmethod
+    def cached(cls, key: tuple, factory):
+        """Returns a cached value for key, creating it with factory() the first time."""
+        if key not in cls._cache:
+            cls._cache[key] = factory()
+        return cls._cache[key]
+
+
+def make_silhouette(surface: pygame.Surface, color: tuple[int, int, int]) -> pygame.Surface:
+    """
+    Returns a solid-coloured silhouette of a surface (used for hit flashes).
+
+    :param surface: The source surface.
+    :param color: The fill colour of the silhouette.
+    """
+    return pygame.mask.from_surface(surface).to_surface(setcolor=(*color, 255), unsetcolor=(0, 0, 0, 0))
+
+
 class AllSprites(pygame.sprite.Group):
     """
-    A custom sprite group that handles camera offset and Y-sorting (plus Z-layering).
+    A custom sprite group that handles the camera: offset, culling, screen shake,
+    a fast tile-based ground layer and Y-sorting (plus Z-layering) of sprites.
     """
     def __init__(self) -> None:
         super().__init__()
         self.display_surface: pygame.Surface = pygame.display.get_surface()
         self.offset: pygame.Vector2 = pygame.Vector2(0, 0)
+        self.ground = None  # Optional GroundLayer drawn underneath every sprite
+
+        # Screen shake
+        self.shake_strength: float = 0.0
+        self.shake_time: float = 0.0
+
+    def add_shake(self, strength: float, duration: float = 0.2) -> None:
+        """Starts (or strengthens) a screen shake."""
+        self.shake_strength = max(self.shake_strength, strength)
+        self.shake_time = max(self.shake_time, duration)
+
+    def update(self, dt: float, *args, **kwargs) -> None:
+        super().update(dt, *args, **kwargs)
+        if self.shake_time > 0:
+            self.shake_time -= dt
+            if self.shake_time <= 0:
+                self.shake_strength = 0.0
 
     def draw_with_offset(self, target_pos: pygame.Vector2 | tuple[float, float]) -> None:
         """
-        Calculates camera offset based on a target position and draws all sprites.
+        Calculates camera offset based on a target position and draws all visible sprites.
         
         :param target_pos: The position the camera should center on (usually the player).
         """
-        self.offset.x = int(target_pos[0] - WINDOW_WIDTH * UI_SCALE // 2)
-        self.offset.y = int(target_pos[1] - WINDOW_HEIGHT * UI_SCALE // 2)
-        
-        # Sort by z_layer then by bottom Y for Y-sorting
-        for sprite in sorted(self.sprites(), key=lambda s: (getattr(s, 'z_layer', 0), s.rect.bottom)):
-            self.display_surface.blit(sprite.image, (int(sprite.rect.left - self.offset.x), int(sprite.rect.top - self.offset.y)))
+        screen_w, screen_h = self.display_surface.get_size()
+        self.offset.x = int(target_pos[0] - screen_w // 2)
+        self.offset.y = int(target_pos[1] - screen_h // 2)
+
+        # Screen shake only affects drawing, not the offset used for aiming
+        draw_offset = pygame.Vector2(self.offset)
+        if self.shake_strength > 0:
+            draw_offset.x += random.uniform(-self.shake_strength, self.shake_strength)
+            draw_offset.y += random.uniform(-self.shake_strength, self.shake_strength)
+        draw_offset.x, draw_offset.y = int(draw_offset.x), int(draw_offset.y)
+
+        if self.ground is not None:
+            self.ground.draw(self.display_surface, draw_offset)
+
+        # Only draw sprites that are (roughly) on screen
+        view = pygame.Rect(draw_offset.x - 64, draw_offset.y - 64, screen_w + 128, screen_h + 128)
+        visible = [s for s in self.sprites() if view.colliderect(s.rect)]
+
+        # Sort by z_layer then by bottom Y (or a custom sort_y) for Y-sorting
+        visible.sort(key=lambda s: (getattr(s, 'z_layer', 0), getattr(s, 'sort_y', None) or s.rect.bottom))
+        blit = self.display_surface.blit
+        for sprite in visible:
+            blit(sprite.image, (int(sprite.rect.left - draw_offset.x), int(sprite.rect.top - draw_offset.y)))
 
 def save_data_exists() -> bool:
     """

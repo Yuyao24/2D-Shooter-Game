@@ -1,3 +1,4 @@
+import math
 import pygame
 from settings import (AssetManager, save_game_data, save_data_exists, clear_save_data, UI_SCALE, WINDOW_WIDTH, WINDOW_HEIGHT, COLOR_WHITE, COLOR_BLACK, COLOR_GREY,
                       COLOR_BLUE, COLOR_DARK_BLUE, COLOR_YELLOW, COLOR_RED, COLOR_GREEN,
@@ -57,13 +58,17 @@ class Button:
 
 class Text:
     """Text label."""
+    _fonts: dict[int, pygame.font.Font] = {}  # Font cache (fonts are slow to create)
+
     def __init__(self, text: str, position: tuple[int, int], font_size: int = 50,
                  colour: str | tuple[int, int, int] = "#000000", anchor: str = "center") -> None:
         self.text: str = text
         self.position: tuple[int, int] = (int(position[0] * UI_SCALE), int(position[1] * UI_SCALE))
         self.font_size: int = int(font_size * UI_SCALE)
         self.colour: str | tuple[int, int, int] = colour
-        self.font: pygame.font.Font = pygame.font.Font(None, self.font_size)
+        if self.font_size not in Text._fonts:
+            Text._fonts[self.font_size] = pygame.font.Font(None, self.font_size)
+        self.font: pygame.font.Font = Text._fonts[self.font_size]
 
         # Text surface and rect
         self.text_surf: pygame.Surface = self.font.render(text, True, colour)
@@ -89,6 +94,14 @@ class Text:
         """Renders the text on the given surface."""
         screen.blit(self.text_surf, self.text_rect)
 
+def draw_shadowed_text(screen: pygame.Surface, text: str, position: tuple[float, float],
+                       font_size: int, colour, anchor: str = "center") -> None:
+    """Draws text with a dark outline so it stays readable on any background."""
+    for dx, dy in ((-1.5, 0), (1.5, 0), (0, -1.5), (0, 1.5), (1.5, 1.5)):
+        Text(text, (position[0] + dx, position[1] + dy), font_size, COLOR_BLACK, anchor).draw(screen)
+    Text(text, position, font_size, colour, anchor).draw(screen)
+
+
 class HUD:
     """HUD (Heads-Up Display) for displaying player health, credits, ammo, etc."""
     def __init__(self, player: Player, flag: Flag) -> None:
@@ -107,8 +120,17 @@ class HUD:
 
         self.round = 1
 
+        # Health shown by the bar "drains" smoothly towards the real value
+        self.display_health: float = player.health
+        self.last_tick: int = pygame.time.get_ticks()
+
+        # Red vignette shown when the player is hurt or at low health
+        self.vignette: pygame.Surface = AssetManager.cached(("vignette",), make_vignette)
+
     def draw(self, screen: pygame.Surface) -> None:
         """Draws the HUD on the given surface."""
+        self.damage_vignette(screen)
+        self.objective(screen)
         self.health_bar(screen)
         self.ammo_counter(screen)
         self.credit_counter(screen)
@@ -120,17 +142,34 @@ class HUD:
     def health_bar(self, screen: pygame.Surface) -> None:
         """Draws the health bar on the given surface."""
 
-        # Calculate health bar width based on current health
-        health_ratio = self.player.health / self.player.max_health
-        health_bar_width = int(health_ratio * 200 * UI_SCALE)
+        # Smoothly move the displayed health towards the real health
+        now = pygame.time.get_ticks()
+        dt = (now - self.last_tick) / 1000
+        self.last_tick = now
+        if self.display_health > self.player.health:
+            self.display_health = max(self.player.health,
+                                      self.display_health - self.player.max_health * 0.8 * dt)
+        else:
+            self.display_health = self.player.health
 
-        # Red for missing health, green for current health
+        # Calculate health bar width based on current health
+        health_ratio = max(0.0, self.player.health / self.player.max_health)
+        health_bar_width = int(health_ratio * 200 * UI_SCALE)
+        trail_ratio = max(0.0, self.display_health / self.player.max_health)
+
+        # Red for missing health, yellow for recently lost health, green for current health
         max_health_bar = pygame.Rect(10 * UI_SCALE, 10 * UI_SCALE, 200 * UI_SCALE, 20 * UI_SCALE)
+        trail_bar = pygame.Rect(10 * UI_SCALE, 10 * UI_SCALE, int(trail_ratio * 200 * UI_SCALE), 20 * UI_SCALE)
         current_health_bar = pygame.Rect(10 * UI_SCALE, 10 * UI_SCALE, health_bar_width, 20 * UI_SCALE)
 
         # Draw health bar
         pygame.draw.rect(screen, COLOR_RED, max_health_bar)
+        pygame.draw.rect(screen, COLOR_YELLOW, trail_bar)
         pygame.draw.rect(screen, COLOR_GREEN, current_health_bar)
+
+        # Health number
+        Text(f"{max(0, int(math.ceil(self.player.health)))} / {int(self.player.max_health)}",
+             (110, 20), font_size=22, colour=COLOR_BLACK).draw(screen)
 
         # Black border around health bar
         border_thickness = int(3 * UI_SCALE)
@@ -147,19 +186,14 @@ class HUD:
         else:
             text = f"{current_ammo} / {max_ammo}"
 
-        ammo_text = Text(text, (55 , 678),
-                         font_size=int(48), colour=COLOR_BLUE, anchor="midleft")
-
         screen.blit(self.ammo_icon, (30 * UI_SCALE, 660 * UI_SCALE))
-        ammo_text.draw(screen)
+        draw_shadowed_text(screen, text, (55, 678), 48, COLOR_BLUE, "midleft")
 
     def credit_counter(self, screen: pygame.Surface) -> None:
         """Draws the credit counter on the given surface."""
         current_credits = self.player.money
 
-        credit_text = Text(f"$ {current_credits}", (29, 630),
-                           font_size=48, colour=COLOR_BLUE, anchor="midleft")
-        credit_text.draw(screen)
+        draw_shadowed_text(screen, f"$ {current_credits}", (29, 630), 48, COLOR_BLUE, "midleft")
 
     def lives_counter(self, screen: pygame.Surface) -> None:
         """Draws the lives counter on the given surface."""
@@ -210,11 +244,99 @@ class HUD:
 
         screen.blit(rotated_image, rotated_rect)
 
+    def damage_vignette(self, screen: pygame.Surface) -> None:
+        """Tints the screen edges red when the player is hurt or low on health."""
+        low_health = max(0.0, 1 - self.player.health / (self.player.max_health * 0.35))
+        hurt = max(0.0, self.player.hurt_timer / 0.15) * 0.6
+        strength = min(1.0, max(low_health * (0.75 + 0.25 * math.sin(pygame.time.get_ticks() / 150)), hurt))
+        if strength > 0.01:
+            self.vignette.set_alpha(int(255 * strength))
+            screen.blit(self.vignette, (0, 0))
+
+    def objective(self, screen: pygame.Surface) -> None:
+        """Shows the current objective: plant the flag, or the flag defense timer."""
+        center_x = WINDOW_WIDTH // 2
+        if not self.flag.is_planted:
+            distance = pygame.math.Vector2(self.player.rect.midbottom).distance_to(self.flag.position)
+            if self.flag.plant_progress > 0:
+                text = f"PLANTING... {int(100 * self.flag.plant_progress / self.flag.plant_time_required)}%"
+            else:
+                text = f"FIND AND PLANT THE FLAG  ({int(distance / 64)}m)"
+            draw_shadowed_text(screen, text, (center_x, 20), 36, COLOR_WHITE)
+            return
+
+        if self.flag.outcome:
+            return
+
+        # Defense timer bar: empties as the flag is defended, grows when enemies hit the flag
+        ratio = max(0.0, min(1.0, self.flag.timer / self.flag.max_timer))
+        width, height = int(300 * UI_SCALE), int(18 * UI_SCALE)
+        bar = pygame.Rect(0, 0, width, height)
+        bar.center = (int(center_x * UI_SCALE), int(48 * UI_SCALE))
+        danger = self.flag.timer > self.flag.max_timer / 2
+        pygame.draw.rect(screen, (40, 40, 40), bar)
+        pygame.draw.rect(screen, COLOR_RED if danger else COLOR_BLUE,
+                         (bar.left, bar.top, int(width * ratio), height))
+        pygame.draw.rect(screen, COLOR_BLACK, bar, int(3 * UI_SCALE))
+
+        label = f"DEFEND THE FLAG: {int(math.ceil(self.flag.timer))}s"
+        draw_shadowed_text(screen, label, (center_x, 20), 36, COLOR_RED if danger else COLOR_WHITE)
+
     def round_counter(self, screen: pygame.Surface) -> None:
         """Draws the round counter on the given surface."""
-        round_text = Text(f"Round: {self.round}", (WINDOW_WIDTH - 38, 52.5),
-                         font_size=48, colour=COLOR_BLUE, anchor="midright")
-        round_text.draw(screen)
+        draw_shadowed_text(screen, f"Round: {self.round}", (WINDOW_WIDTH - 38, 52.5), 48, COLOR_BLUE, "midright")
+
+def make_vignette() -> pygame.Surface:
+    """Creates a full-screen red vignette (transparent centre, red edges)."""
+    size = (int(WINDOW_WIDTH * UI_SCALE), int(WINDOW_HEIGHT * UI_SCALE))
+    small = pygame.Surface((160, 90), pygame.SRCALPHA)
+    for y in range(90):
+        for x in range(160):
+            dx, dy = (x - 80) / 80, (y - 45) / 45
+            d = max(0.0, min(1.0, (math.hypot(dx, dy) - 0.55) / 0.6))
+            small.set_at((x, y), (200, 0, 0, int(200 * d * d)))
+    return pygame.transform.smoothscale(small, size)
+
+
+class MenuBackground:
+    """Animated menu background: scrolling sea with characters from the game."""
+    def __init__(self) -> None:
+        coast = AssetManager.get_image("assets/map/coast.png")
+        # The open-water tile has 4 animation frames, 3 tiles apart vertically
+        self.water = [coast.subsurface((64, 64 + 192 * i, 64, 64)) for i in range(4)]
+        self.player_frames = AssetManager.get_sheet("assets/images/player_sheet.png", 128, 128)[2]
+        monster = AssetManager.get_sheet("assets/images/monsters/Charmadillo.png", 192, 192)[0]
+        self.monster_frames = monster  # Monsters face left, towards the player
+        self.title_font = pygame.font.Font(None, int(130 * UI_SCALE))
+
+    def draw(self, screen: pygame.Surface, title: str | None = None, panel_rect: tuple | None = None) -> None:
+        ticks = pygame.time.get_ticks()
+        frame = self.water[(ticks // 300) % 4]
+        scroll = (ticks / 40) % 64
+        width, height = screen.get_size()
+        for y in range(-1, height // 64 + 2):
+            for x in range(-1, width // 64 + 2):
+                screen.blit(frame, (x * 64 - scroll, y * 64 - scroll / 2))
+
+        if panel_rect:
+            rect = pygame.Rect([int(v * UI_SCALE) for v in panel_rect])
+            panel = pygame.Surface(rect.size, pygame.SRCALPHA)
+            pygame.draw.rect(panel, (255, 255, 255, 225), panel.get_rect(), border_radius=int(16 * UI_SCALE))
+            screen.blit(panel, rect)
+            pygame.draw.rect(screen, COLOR_DARK_BLUE, rect, int(3 * UI_SCALE), border_radius=int(16 * UI_SCALE))
+
+            # Player and a monster standing on either side of the panel
+            bob = math.sin(ticks / 250) * 4
+            player = pygame.transform.scale_by(self.player_frames[(ticks // 150) % 4], 1.5)
+            screen.blit(player, player.get_rect(midright=(rect.left - 20, rect.centery + bob)))
+            monster = self.monster_frames[(ticks // 170) % 4]
+            screen.blit(monster, monster.get_rect(midleft=(rect.right + 10, rect.centery - bob)))
+
+        if title:
+            for offset, colour in (((6, 6), COLOR_BLACK), ((0, 0), COLOR_WHITE)):
+                label = self.title_font.render(title, True, colour)
+                screen.blit(label, label.get_rect(center=(width // 2 + offset[0], int(75 * UI_SCALE) + offset[1])))
+
 
 def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     """
@@ -234,7 +356,8 @@ def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
 
     # Create high-score text
     high_score_text = Text(f"High Score: {high_score}",
-                           (WINDOW_WIDTH // 2,120), font_size=100, colour=COLOR_DARK_BLUE)
+                           (WINDOW_WIDTH // 2, 190), font_size=70, colour=COLOR_DARK_BLUE)
+    background = MenuBackground()
 
     # Create buttons
     resume_game_button = Button("Resume Game", (WINDOW_WIDTH // 2, 300),
@@ -276,7 +399,8 @@ def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
         else:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
-        screen.fill(COLOR_WHITE)  # Clear screen with a white background
+        # Animated background with title
+        background.draw(screen, "SHOOTER GAME", (WINDOW_WIDTH // 2 - 230, 145, 460, 545))
 
         # Render buttons
         for button in buttons:
@@ -391,6 +515,7 @@ def game_over_menu(screen: pygame.Surface, clock: pygame.time.Clock, game_over_s
     main_menu_button = Button("Main Menu", (WINDOW_WIDTH // 2, 600),
                               300, 120)
     buttons = [main_menu_button]
+    background = MenuBackground()
 
     while True:
         for event in pygame.event.get(): # Event loop
@@ -405,7 +530,8 @@ def game_over_menu(screen: pygame.Surface, clock: pygame.time.Clock, game_over_s
         else:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
-        screen.fill(COLOR_WHITE)  # Clear screen with a white background
+        # Animated background with a panel behind the stats
+        background.draw(screen, None, (WINDOW_WIDTH // 2 - 300, 40, 600, 640))
 
         # Render game over text
         game_over_text.draw(screen)
