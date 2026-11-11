@@ -1,6 +1,7 @@
 import math
 import random
 import pygame
+from settings import get_font
 
 
 class Particle(pygame.sprite.Sprite):
@@ -33,13 +34,9 @@ class Particle(pygame.sprite.Sprite):
 
 class FloatingText(pygame.sprite.Sprite):
     """Text (damage numbers, rewards) that pops up, floats upwards and fades out."""
-    _fonts: dict[int, pygame.font.Font] = {}
-
     def __init__(self, position, text: str, color, size: int, groups, lifetime: float = 0.8) -> None:
         super().__init__(groups)
-        if size not in self._fonts:
-            self._fonts[size] = pygame.font.Font(None, size)
-        font = self._fonts[size]
+        font = get_font(size)
 
         # Text with a dark outline so it is readable on any background
         label = font.render(text, True, color)

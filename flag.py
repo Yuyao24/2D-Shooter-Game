@@ -4,6 +4,7 @@ from settings import AssetManager, COLOR_RED, COLOR_BLUE, make_silhouette
 from stats_manager import StatsManager
 from player import Player
 from effects import FX
+from sound import Audio
 
 
 def make_waving_frames(image: pygame.Surface, count: int = 8, pole_width: int = 6,
@@ -120,6 +121,9 @@ class Flag(pygame.sprite.Sprite):
 
         # Check if player is in radius
         if distance_to_player <= self.radius:
+            # Tick once per second while planting
+            if int(self.plant_progress + dt) > int(self.plant_progress) or self.plant_progress == 0:
+                Audio.play("tick")
             self.plant_progress += dt  # Increase planting progress
             if self.plant_progress >= self.plant_time_required:
                 self.plant_flag()
@@ -172,6 +176,7 @@ class Flag(pygame.sprite.Sprite):
         self.rise_timer = 0.35
 
         # Celebration effects
+        Audio.play("flag_planted")
         FX.ring(self.position, self.radius, (0, 162, 232), 0.5, 6)
         FX.burst(self.position, [(0, 162, 232), (255, 255, 255), (255, 215, 0)], count=30,
                  speed=(150, 400), lifetime=(0.4, 0.9), size=(4, 8))
@@ -191,4 +196,5 @@ class Flag(pygame.sprite.Sprite):
         """Increases timer by self.damage_per_hit."""
         self.timer += self.damage_per_hit
         self.hit_timer = 0.12
+        Audio.play("flag_hit", self.position)
         FX.text((self.position.x, self.position.y - 180), f"+{self.damage_per_hit:g}s", (255, 80, 80), 30, 0.7)

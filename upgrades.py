@@ -3,10 +3,15 @@ import random
 from settings import (save_game_data, UI_SCALE,WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_CENTER, COLOR_WHITE, COLOR_BLACK,
                       COLOR_GREY, COLOR_BLUE, COLOR_DARK_BLUE, COLOR_GREEN, COLOR_DARK_GREEN,
                       COLOR_RED, COLOR_YELLOW, COLOR_GOLD)
-from menus import Button, Text, confirmation_menu
+from menus import Button, Text, confirmation_menu, MenuBackground, draw_shadowed_text, handle_mute_key
 from player import Player
 from typing import Callable
 from stats_manager import StatsManager
+from settings import get_font, nine_slice
+
+TIER_NAMES = {1: "COMMON", 2: "RARE", 3: "LEGENDARY"}
+CARD_IMAGE = "assets/images/ui/card.png"
+from sound import Audio
 
 
 class Upgrade:
@@ -55,43 +60,67 @@ class UpgradeCard:
         self.border_color = border_color[upgrade.tier]
 
         # Draw upgrade name at top
-        self.name_text = Text(self.upgrade.name, (position[0], position[1] - 140),
+        self.name_text = Text(self.upgrade.name, (position[0], position[1] - 145),
                          font_size=40, colour=COLOR_BLACK)
+
+        # Tier label
+        self.tier_text = Text(TIER_NAMES[upgrade.tier], (position[0], position[1] - 118),
+                              font_size=24, colour=self.border_color)
 
         # Cost text
         self.cost_text = Text(f"${self.upgrade.cost}", (position[0], position[1] + 150),
                               font_size=32, colour=COLOR_BLACK)
 
         # Description text
-        wrapped_desc = self._wrap_text(self.upgrade.description, self.width - 30)
+        wrapped_desc = self._wrap_text(self.upgrade.description, self.width - int(50 * UI_SCALE))
         self.desc_lines = []
+        first_line_y = position[1] + 15 - (len(wrapped_desc) - 1) * 15  # Centred in the description box
         for i, line in enumerate(wrapped_desc):
-            self.desc_lines.append(Text(line, (position[0], (position[1] - int(20) + (i * 28))),
-                             font_size=24, colour=COLOR_BLACK))
+            self.desc_lines.append(Text(line, (position[0], first_line_y + i * 30),
+                             font_size=26, colour=COLOR_BLACK))
 
 
     def draw(self, screen) -> None:
         """Draws the upgrade card."""
 
-        # Draw card background with tier color
-        pygame.draw.rect(screen, self.color, self.rect)
-        pygame.draw.rect(screen, self.border_color, self.rect, int(4 * UI_SCALE))
+        # Cards lift up when hovered or selected
+        lift = -int(10 * UI_SCALE) if self.selected else (-int(5 * UI_SCALE) if self.is_hovered() else 0)
 
         if self.selected:
-            # Highlighted border effect
-            pygame.draw.rect(screen, COLOR_BLACK, self.rect.inflate(int(12 * UI_SCALE), int(12 * UI_SCALE)), int(6 * UI_SCALE))
+            # Glowing gold outline behind the card
+            glow = nine_slice(CARD_IMAGE, self.rect.inflate(int(16 * UI_SCALE), int(16 * UI_SCALE)).size,
+                              14, tint=(255, 200, 40))
+            screen.blit(glow, glow.get_rect(center=self.rect.move(0, lift).center))
 
-        # Draw name, cost, description
-        self.name_text.draw(screen)
-        self.cost_text.draw(screen)
-        for desc_line in self.desc_lines:
-            desc_line.draw(screen)
+        # Card body: white UI panel tinted with the tier colour
+        tint = pygame.Color(self.color)
+        body = nine_slice(CARD_IMAGE, self.rect.size, 14, tint=(tint.r, tint.g, tint.b))
+        screen.blit(body, self.rect.move(0, lift))
+
+        # Darker header band
+        header = pygame.Rect(self.rect.left + int(8 * UI_SCALE), self.rect.top + int(8 * UI_SCALE) + lift,
+                             self.rect.width - int(16 * UI_SCALE), int(70 * UI_SCALE))
+        band = pygame.Surface(header.size, pygame.SRCALPHA)
+        pygame.draw.rect(band, (255, 255, 255, 140), band.get_rect(), border_radius=int(8 * UI_SCALE))
+        screen.blit(band, header)
+
+        # Light box behind the description so it is readable on every tier colour
+        desc_box = pygame.Rect(self.rect.left + int(14 * UI_SCALE), self.rect.top + int(110 * UI_SCALE) + lift,
+                               self.rect.width - int(28 * UI_SCALE), int(160 * UI_SCALE))
+        box = pygame.Surface(desc_box.size, pygame.SRCALPHA)
+        pygame.draw.rect(box, (255, 255, 255, 170), box.get_rect(), border_radius=int(8 * UI_SCALE))
+        screen.blit(box, desc_box)
+
+        # Draw name, tier, cost, description (moved with the card)
+        for text in [self.name_text, self.tier_text, self.cost_text] + self.desc_lines:
+            screen.blit(text.text_surf, text.text_rect.move(0, lift))
 
     def is_clicked(self, event) -> bool:
         """Checks if the card was clicked."""
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.rect.collidepoint(event.pos):
                 self.selected = not self.selected
+                Audio.play("select")
                 return True
         return False
 
@@ -106,7 +135,7 @@ class UpgradeCard:
         parts = [part.strip().capitalize() for part in text.split(',')]
 
         lines = []
-        font = pygame.font.Font(None, int(24 * UI_SCALE))
+        font = get_font(int(26 * UI_SCALE))
 
         for part in parts:
             words = part.split()
@@ -135,7 +164,7 @@ def select_random_upgrades(all_upgrades, player: Player) -> list[Upgrade]:
         # Check toggle upgrades
         if upgrade.name == "Holy Trinity" and player.has_trinity:
             continue
-        if upgrade.name == "Adrenaline Rush" and player.has_adrenaline:
+        if upgrade.name == "Adrenaline" and player.has_adrenaline:
             continue
         if upgrade.name == "Auto Clicker" and player.has_auto_shoot:
             continue
@@ -340,13 +369,7 @@ def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock,
                          200, 70, colour=COLOR_BLUE, font_size=32)
     buttons = [quit_button, buy_button, skip_button]
 
-    # Buy Upgrades Text
-    buy_upgrades_text = Text("Buy Upgrades", (WINDOW_WIDTH // 2, 100),
-                             font_size=80, colour=COLOR_BLACK)
-
-    # Credits
-    credits_text = Text(f"Credits: ${player.money}", (30, 40), font_size=48,
-                        anchor="midleft", colour=COLOR_YELLOW)
+    background = MenuBackground()
 
     while True:
 
@@ -358,6 +381,7 @@ def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock,
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
+            handle_mute_key(event)
             for card in upgrade_cards:
                 # Check if card is clicked. Selection toggle handled inside card class.
                 card.is_clicked(event)
@@ -374,6 +398,7 @@ def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock,
                 if total_cost > player.money or not selected_cards:
                     continue  # Shouldn't happen due to button state, but double check
 
+                Audio.play("buy")
                 for card in selected_cards:
                     player.update_money(-card.upgrade.cost)
                     stats_manager.update_money(card.upgrade.cost)
@@ -386,15 +411,15 @@ def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock,
                 pygame.mouse.set_visible(False)
                 return "CONTINUE"  # Proceed to next round
 
-        screen.fill(COLOR_WHITE)
+        background.draw(screen)
 
         # Draw upgrade cards + buttons
         for item in (upgrade_cards + buttons):
             item.draw(screen)
 
         # Draw text
-        buy_upgrades_text.draw(screen)
-        credits_text.draw(screen)
+        draw_shadowed_text(screen, f"Round {round_num} complete - Buy Upgrades", (WINDOW_WIDTH // 2, 100), 70, COLOR_WHITE)
+        draw_shadowed_text(screen, f"Credits: ${player.money}", (30, 40), 48, COLOR_YELLOW, "midleft")
 
         # Update cursor
         if any(item.is_hovered() for item in (upgrade_cards + buttons)):
@@ -404,10 +429,8 @@ def upgrade_menu(screen: pygame.Surface, clock: pygame.time.Clock,
 
         # Draw total cost if upgrades selected
         if selected_cards:
-            total_text = Text(f"Total: ${total_cost}", (WINDOW_WIDTH // 2, WINDOW_HEIGHT - 160),
-                              font_size=36,
-                              colour=COLOR_GREEN if player.money >= total_cost else COLOR_RED)
-            total_text.draw(screen)
+            draw_shadowed_text(screen, f"Total: ${total_cost}", (WINDOW_WIDTH // 2, WINDOW_HEIGHT - 160), 40,
+                               COLOR_GREEN if player.money >= total_cost else COLOR_RED)
 
         # Disable buy button if not enough money
         if player.money < total_cost or not selected_cards:

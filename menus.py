@@ -2,9 +2,33 @@ import math
 import pygame
 from settings import (AssetManager, save_game_data, save_data_exists, clear_save_data, UI_SCALE, WINDOW_WIDTH, WINDOW_HEIGHT, COLOR_WHITE, COLOR_BLACK, COLOR_GREY,
                       COLOR_BLUE, COLOR_DARK_BLUE, COLOR_YELLOW, COLOR_RED, COLOR_GREEN,
-                      COLOR_DARK_GREEN, WINDOW_CENTER, save_game_data)
+                      COLOR_DARK_GREEN, WINDOW_CENTER, save_game_data, get_font, nine_slice)
 from player import Player
 from flag import Flag
+from sound import Audio
+
+# UI pack images used for buttons, per button colour
+BUTTON_IMAGES = {
+    COLOR_BLUE: "assets/images/ui/button_blue.png",
+    COLOR_GREEN: "assets/images/ui/button_green.png",
+    COLOR_RED: "assets/images/ui/button_red.png",
+    COLOR_YELLOW: "assets/images/ui/button_yellow.png",
+}
+DISABLED_BUTTON_IMAGE = "assets/images/ui/button_grey.png"
+PANEL_IMAGE = "assets/images/ui/panel.png"
+
+
+def draw_panel(screen: pygame.Surface, rect: pygame.Rect, alpha: int = 240) -> None:
+    """Draws a rounded UI panel (scaled from the UI pack) filling the given rect."""
+    panel = nine_slice(PANEL_IMAGE, rect.size, 12)
+    panel.set_alpha(alpha)
+    screen.blit(panel, rect)
+
+
+def handle_mute_key(event: pygame.event.Event) -> None:
+    """Toggles sound when M is pressed."""
+    if event.type == pygame.KEYDOWN and event.key == pygame.K_m:
+        Audio.toggle_mute()
 
 class Button:
     """Button for menus."""
@@ -27,27 +51,44 @@ class Button:
         # Clickable
         self.is_clickable: bool = True
 
-    def draw(self, screen: pygame.Surface) -> None: 
-        """Renders the button on the given surface."""
-        if self.is_clickable:
-            if self.is_hovered():
-                pygame.draw.rect(screen, COLOR_WHITE, self.rect)
-                pygame.draw.rect(screen, self.colour, self.rect, int(3 * UI_SCALE)) # Border
-                self.text_obj.draw(screen)
-            else:
-                pygame.draw.rect(screen, self.colour, self.rect)
-                pygame.draw.rect(screen, COLOR_BLACK, self.rect, int(3 * UI_SCALE)) # Border
-                self.text_obj.draw(screen)
-        else:
-            pygame.draw.rect(screen, COLOR_GREY, self.rect)
-            pygame.draw.rect(screen, COLOR_BLACK, self.rect, int(3 * UI_SCALE))  # Border
-            self.text_obj.draw(screen)
+        # Hover state (to play a sound when the mouse moves onto the button)
+        self.was_hovered: bool = False
 
-    def is_clicked(self, event: pygame.event.Event) -> bool: 
+    def draw(self, screen: pygame.Surface) -> None:
+        """Renders the button on the given surface."""
+        hovered = self.is_clickable and self.is_hovered()
+        if hovered and not self.was_hovered:
+            Audio.play("hover")
+        self.was_hovered = hovered
+
+        if self.is_clickable:
+            image_path = BUTTON_IMAGES.get(self.colour, BUTTON_IMAGES[COLOR_BLUE])
+            pressed = hovered and pygame.mouse.get_pressed()[0]
+            image = nine_slice(image_path, self.rect.size, 14, brighten=30 if hovered else 0)
+            lift = 0 if pressed else (-int(3 * UI_SCALE) if hovered else 0)
+            text_colour = COLOR_WHITE
+        else:
+            image = nine_slice(DISABLED_BUTTON_IMAGE, self.rect.size, 14)
+            lift = 0
+            text_colour = "#8A8A99"
+
+        screen.blit(image, self.rect.move(0, lift))
+
+        # Text with a soft shadow, centred on the button's face (above its 3D edge)
+        face_center = (self.rect.centerx, self.rect.centery + lift - int(2 * UI_SCALE))
+        label = get_font(self.font_size).render(self.text_content, True, text_colour)
+        if self.is_clickable:
+            shadow = get_font(self.font_size).render(self.text_content, True, (0, 0, 0))
+            shadow.set_alpha(90)
+            screen.blit(shadow, shadow.get_rect(center=(face_center[0] + 2, face_center[1] + 2)))
+        screen.blit(label, label.get_rect(center=face_center))
+
+    def is_clicked(self, event: pygame.event.Event) -> bool:
         """Checks if the button was clicked in the given event."""
         if self.is_clickable:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # Button 1 is left click
                 if self.is_hovered():
+                    Audio.play("click")
                     return True
         return False
 
@@ -58,17 +99,13 @@ class Button:
 
 class Text:
     """Text label."""
-    _fonts: dict[int, pygame.font.Font] = {}  # Font cache (fonts are slow to create)
-
     def __init__(self, text: str, position: tuple[int, int], font_size: int = 50,
                  colour: str | tuple[int, int, int] = "#000000", anchor: str = "center") -> None:
         self.text: str = text
         self.position: tuple[int, int] = (int(position[0] * UI_SCALE), int(position[1] * UI_SCALE))
         self.font_size: int = int(font_size * UI_SCALE)
         self.colour: str | tuple[int, int, int] = colour
-        if self.font_size not in Text._fonts:
-            Text._fonts[self.font_size] = pygame.font.Font(None, self.font_size)
-        self.font: pygame.font.Font = Text._fonts[self.font_size]
+        self.font: pygame.font.Font = get_font(self.font_size)
 
         # Text surface and rect
         self.text_surf: pygame.Surface = self.font.render(text, True, colour)
@@ -307,7 +344,7 @@ class MenuBackground:
         self.player_frames = AssetManager.get_sheet("assets/images/player_sheet.png", 128, 128)[2]
         monster = AssetManager.get_sheet("assets/images/monsters/Charmadillo.png", 192, 192)[0]
         self.monster_frames = monster  # Monsters face left, towards the player
-        self.title_font = pygame.font.Font(None, int(130 * UI_SCALE))
+        self.title_font = get_font(int(130 * UI_SCALE))
 
     def draw(self, screen: pygame.Surface, title: str | None = None, panel_rect: tuple | None = None) -> None:
         ticks = pygame.time.get_ticks()
@@ -320,10 +357,7 @@ class MenuBackground:
 
         if panel_rect:
             rect = pygame.Rect([int(v * UI_SCALE) for v in panel_rect])
-            panel = pygame.Surface(rect.size, pygame.SRCALPHA)
-            pygame.draw.rect(panel, (255, 255, 255, 225), panel.get_rect(), border_radius=int(16 * UI_SCALE))
-            screen.blit(panel, rect)
-            pygame.draw.rect(screen, COLOR_DARK_BLUE, rect, int(3 * UI_SCALE), border_radius=int(16 * UI_SCALE))
+            draw_panel(screen, rect)
 
             # Player and a monster standing on either side of the panel
             bob = math.sin(ticks / 250) * 4
@@ -346,6 +380,7 @@ def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
     """
 
     pygame.mouse.set_visible(True)
+    Audio.music("menu")
 
     # Load high score
     try:
@@ -374,6 +409,7 @@ def main_menu(screen: pygame.Surface, clock: pygame.time.Clock) -> str:
         resume_game_button.is_clickable = save_data_exists()
 
         for event in pygame.event.get(): # Event loop
+            handle_mute_key(event)
             if quit_button.is_clicked(event) or event.type == pygame.QUIT:
                 return "QUIT", False  # Change game state to QUIT, (False irrelevant for quitting)
             if resume_game_button.is_clicked(event):
@@ -426,7 +462,7 @@ def pause_menu(screen: pygame.Surface, clock: pygame.time.Clock,
 
     # Game paused text
     paused_text = Text("Game Paused", (WINDOW_WIDTH // 2, 150),
-                       font_size=100, colour=COLOR_DARK_BLUE)
+                       font_size=100, colour=COLOR_WHITE)
 
     # Create buttons
     resume_button = Button("Resume", (WINDOW_WIDTH // 2, 325),
@@ -434,6 +470,9 @@ def pause_menu(screen: pygame.Surface, clock: pygame.time.Clock,
     quit_button = Button("Save and Quit", (WINDOW_WIDTH // 2, 470),
                          300, 120)
     buttons = [resume_button, quit_button]
+
+    mute_hint = Text("Press M to mute / unmute sound", (WINDOW_WIDTH // 2, 580),
+                     font_size=32, colour=COLOR_WHITE)
 
     # Create a transparent overlay
     overlay = pygame.Surface((WINDOW_WIDTH * UI_SCALE, WINDOW_HEIGHT * UI_SCALE))
@@ -444,6 +483,7 @@ def pause_menu(screen: pygame.Surface, clock: pygame.time.Clock,
         for event in pygame.event.get(): # Event loop
             if event.type == pygame.QUIT:
                 return "QUIT"
+            handle_mute_key(event)
             if quit_button.is_clicked(event):
                 confirmed = confirmation_menu(screen, clock, 
                                                 "Are you sure you want to quit? "
@@ -468,6 +508,7 @@ def pause_menu(screen: pygame.Surface, clock: pygame.time.Clock,
 
         # Render paused text
         paused_text.draw(screen)
+        mute_hint.draw(screen)
 
         # Render buttons
         for button in buttons:
@@ -484,6 +525,8 @@ def game_over_menu(screen: pygame.Surface, clock: pygame.time.Clock, game_over_s
     """
 
     pygame.mouse.set_visible(True)
+
+    Audio.music("menu")
 
     # Game over text
     game_over_text = Text("Game Over", (WINDOW_WIDTH // 2, 100),
@@ -521,6 +564,7 @@ def game_over_menu(screen: pygame.Surface, clock: pygame.time.Clock, game_over_s
         for event in pygame.event.get(): # Event loop
             if event.type == pygame.QUIT:
                 return "QUIT"
+            handle_mute_key(event)
             if main_menu_button.is_clicked(event):
                 return "MAIN_MENU"  # Change game state to MAIN MENU
 
@@ -568,7 +612,7 @@ def confirmation_menu(screen: pygame.Surface, clock: pygame.time.Clock,
     dialog_rect.center = (int(WINDOW_WIDTH // 2 * UI_SCALE), int(WINDOW_HEIGHT // 2 * UI_SCALE))
     
     # Create dialog text
-    wrapped_message = wrap_text(message, 650, 48)
+    wrapped_message = wrap_text(message, int(580 * UI_SCALE), int(48 * UI_SCALE))
     text_objects = []
     for i, line in enumerate(wrapped_message):
         text_objects.append(Text(line, (WINDOW_WIDTH // 2, 240 + i * 60),
@@ -600,8 +644,7 @@ def confirmation_menu(screen: pygame.Surface, clock: pygame.time.Clock,
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
         # Render all elements
-        pygame.draw.rect(screen, COLOR_WHITE, dialog_rect)
-        pygame.draw.rect(screen, COLOR_BLACK, dialog_rect, 3)  # Border
+        draw_panel(screen, dialog_rect, 255)
         for text_obj in text_objects:
             text_obj.draw(screen)
         for button in buttons:
@@ -619,7 +662,7 @@ def wrap_text(text: str, max_width: int, font_size: int) -> list[str]:
     :param font_size: The font size to use for measuring text width.
     :return: A list of strings, where each string is a line of wrapped text.
     """
-    font = pygame.font.Font(None, font_size)
+    font = get_font(font_size)
     words = text.split(' ')
     lines = []
     current_line = ""
