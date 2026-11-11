@@ -174,25 +174,34 @@ class Pathfinder:
         :param end_pos: The target position in world coordinates.
         :return: A list of pygame.Vector2 nodes representing the path.
         """
-        start_x, start_y = int(start_pos[0] // TILE_SIZE), int(start_pos[1] // TILE_SIZE)
-        end_x, end_y = int(end_pos[0] // TILE_SIZE), int(end_pos[1] // TILE_SIZE)
-
-        # Check if the end tile is walkable
-        try:
-            end_node = self.grid.node(end_x, end_y)
-        except IndexError:
-            return []
-
-        if not end_node.walkable:
+        # Tiles touching an obstacle are unwalkable, but entities often stand on them
+        # (e.g. the player hugging a wall), so use the nearest walkable tile instead
+        start = self.nearest_walkable(int(start_pos[0] // TILE_SIZE), int(start_pos[1] // TILE_SIZE))
+        end = self.nearest_walkable(int(end_pos[0] // TILE_SIZE), int(end_pos[1] // TILE_SIZE))
+        if start is None or end is None:
             return []
 
         self.grid.cleanup()
-
-        try:
-            start_node = self.grid.node(start_x, start_y)
-        except IndexError:
-            return []
+        start_node = self.grid.node(*start)
+        end_node = self.grid.node(*end)
 
         path, _ = self.finder.find_path(start_node, end_node, self.grid)
 
         return [pygame.Vector2((node.x + 0.5) * TILE_SIZE, (node.y + 0.5) * TILE_SIZE) for node in path]
+
+    def nearest_walkable(self, x: int, y: int, max_radius: int = 2) -> tuple[int, int] | None:
+        """
+        Returns the given tile if it is walkable, otherwise the closest walkable tile
+        within max_radius tiles (or None if there is none / the tile is off the map).
+        """
+        if not (0 <= x < self.width and 0 <= y < self.height):
+            return None
+        best, best_distance = None, None
+        for dy in range(-max_radius, max_radius + 1):
+            for dx in range(-max_radius, max_radius + 1):
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < self.width and 0 <= ny < self.height and self.grid.node(nx, ny).walkable:
+                    distance = dx * dx + dy * dy
+                    if best_distance is None or distance < best_distance:
+                        best, best_distance = (nx, ny), distance
+        return best

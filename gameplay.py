@@ -170,11 +170,33 @@ class RoundManager:
             # 2 melee : 1 ranged (some melee enemies are replaced by brutes in later rounds)
             if random.random() < (2/3):
                 enemy_class = BruteEnemy if random.random() < brute_chance else MeleeEnemy
-                enemy_class((sx, sy), (self.all_sprites, self.enemy_sprites),
-                           self.collision_sprites, self.player, self.flag, self.pathfinder)
             else:
-                RangedEnemy((sx, sy), (self.all_sprites, self.enemy_sprites),
-                            self.collision_sprites, self.player, self.flag, self.pathfinder)
+                enemy_class = RangedEnemy
+            enemy = enemy_class((sx, sy), (self.all_sprites, self.enemy_sprites),
+                                self.collision_sprites, self.player, self.flag, self.pathfinder)
+            self.place_in_free_spot(enemy, position)
+
+    def place_in_free_spot(self, enemy, group_center) -> None:
+        """
+        Makes sure a newly spawned enemy is not inside an obstacle (it would be stuck there
+        all round). Tries random spots around the group centre, then the centre itself.
+        """
+        def is_free(hitbox) -> bool:
+            tile_x, tile_y = int(hitbox.centerx // TILE_SIZE), int(hitbox.centery // TILE_SIZE)
+            if not (0 <= tile_x < self.pathfinder.width and 0 <= tile_y < self.pathfinder.height):
+                return False
+            if not self.pathfinder.grid.node(tile_x, tile_y).walkable:
+                return False
+            return not any(o.hitbox.colliderect(hitbox) for o in self.collision_sprites.near(hitbox))
+
+        candidates = [None] + [(group_center.x + random.randint(-100, 100), group_center.y + random.randint(-100, 100))
+                               for _ in range(15)] + [(group_center.x, group_center.y)]
+        for candidate in candidates:
+            if candidate is not None:
+                enemy.hitbox.center = candidate
+            if is_free(enemy.hitbox):
+                break
+        enemy.rect.midbottom = enemy.hitbox.midbottom
 
     def spawn_enemies(self, player_spawn):
         # Far enough from the player

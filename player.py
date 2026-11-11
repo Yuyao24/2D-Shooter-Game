@@ -128,22 +128,60 @@ class Player(pygame.sprite.Sprite):
             current_speed = self.speed * 1.25
 
         # Update position using delta time
-        self.hitbox.x += self.direction.x * current_speed * dt
-        self.collide("horizontal")
-        self.hitbox.y += self.direction.y * current_speed * dt
-        self.collide("vertical")
+        step = current_speed * dt
+        self.hitbox.x += self.direction.x * step
+        self.collide("horizontal", step)
+        self.hitbox.y += self.direction.y * step
+        self.collide("vertical", step)
         self.rect.midbottom = self.hitbox.midbottom
 
-    def collide(self, direction: str) -> None:
-        """Handles collisions with obstacles."""
+    CORNER_SLIDE = 16  # Max pixels the player is nudged around a corner they bump into
+
+    def collide(self, direction: str, step: float = 0.0) -> None:
+        """Handles collisions with obstacles, sliding the player around corners they barely touch."""
         for obstacle in self.collision_sprites.near(self.hitbox):
-            if obstacle.hitbox.colliderect(self.hitbox):
-                if direction == "horizontal":
-                    if self.direction.x > 0: self.hitbox.right = obstacle.hitbox.left
-                    if self.direction.x < 0: self.hitbox.left = obstacle.hitbox.right
-                if direction == "vertical":
-                    if self.direction.y < 0: self.hitbox.top = obstacle.hitbox.bottom
-                    if self.direction.y > 0: self.hitbox.bottom = obstacle.hitbox.top
+            box = obstacle.hitbox
+            if not box.colliderect(self.hitbox):
+                continue
+            if direction == "horizontal":
+                # Moving purely sideways into a corner: slide up/down around it
+                if self.direction.y == 0 and self.slide_around(box, "y", step):
+                    continue
+                if self.direction.x > 0: self.hitbox.right = box.left
+                if self.direction.x < 0: self.hitbox.left = box.right
+            if direction == "vertical":
+                # Moving purely up/down into a corner: slide left/right around it
+                if self.direction.x == 0 and self.slide_around(box, "x", step):
+                    continue
+                if self.direction.y < 0: self.hitbox.top = box.bottom
+                if self.direction.y > 0: self.hitbox.bottom = box.top
+
+    def slide_around(self, box, axis: str, step: float) -> bool:
+        """
+        If the player only overlaps the edge of an obstacle by a few pixels, nudges them
+        sideways (by at most one movement step) instead of stopping them.
+
+        :return: True if the player was nudged and is now clear of the obstacle.
+        """
+        if axis == "x":
+            overlaps = {-1: self.hitbox.right - box.left, 1: box.right - self.hitbox.left}
+        else:
+            overlaps = {-1: self.hitbox.bottom - box.top, 1: box.bottom - self.hitbox.top}
+        side, overlap = min(overlaps.items(), key=lambda item: item[1])
+        if overlap > self.CORNER_SLIDE:
+            return False
+
+        nudge = side * min(overlap, max(step, 0.5))
+        moved = self.hitbox.move(nudge, 0) if axis == "x" else self.hitbox.move(0, nudge)
+        # Undo the forward movement this frame; only nudge sideways (no clipping into other walls)
+        if axis == "x":
+            moved.y = box.bottom if self.direction.y < 0 else box.top - moved.height
+        else:
+            moved.x = box.right if self.direction.x < 0 else box.left - moved.width
+        if any(o.hitbox.colliderect(moved) for o in self.collision_sprites.near(moved)):
+            return False
+        self.hitbox.update(moved)
+        return True
 
     def shoot(self, all_sprites: pygame.sprite.Group, bullets: pygame.sprite.Group) -> None:
         """Fires the player's weapon."""
@@ -381,7 +419,10 @@ class Bullet(pygame.sprite.Sprite):
 
     def check_collision(self) -> None:
         """Checks for collisions with obstacles and destroys the bullet on impact."""
-        if any(obstacle.hitbox.colliderect(self.rect) for obstacle in self.collision_sprites.near(self.rect)):
+        # Small box around the bullet's tip: the sprite's rect is much bigger than the visible bullet
+        tip = pygame.FRect(0, 0, 12, 12)
+        tip.center = self.rect.center
+        if any(obstacle.hitbox.colliderect(tip) for obstacle in self.collision_sprites.near(tip)):
             FX.burst(self.rect.center, [(255, 230, 140), (255, 180, 60), (200, 200, 200)], count=6,
                      speed=(60, 200), lifetime=(0.12, 0.3), size=(2, 4), direction=-self.direction, spread=140)
             self.kill()

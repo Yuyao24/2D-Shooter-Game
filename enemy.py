@@ -85,7 +85,7 @@ class BaseEnemy(pygame.sprite.Sprite):
         self.image: pygame.Surface = self.frames["idle"][self.facing][0][0]
         self.rect: pygame.FRect = self.image.get_frect(center=position)
         self.mask: pygame.Mask = self.frames["idle"][self.facing][0][2]
-        self.hitbox: pygame.Rect = pygame.Rect(0, 0, 56, 36)
+        self.hitbox: pygame.FRect = pygame.FRect(0, 0, 56, 36)  # Float rect: small per-frame moves must not be rounded away
         self.hitbox.midbottom = self.rect.midbottom
         self.z_layer: int = 1
 
@@ -212,12 +212,13 @@ class BaseEnemy(pygame.sprite.Sprite):
 
         target_tile = (int(target_pos.x // TILE_SIZE), int(target_pos.y // TILE_SIZE))
 
-        if target_tile != self.last_target_tile:
+        if target_tile != self.last_target_tile or not self.path:
             self.path = self.pathfinder.get_path(self.hitbox.center, target_pos)
             if self.path:
                 self.path.pop(0)
-
-            self.last_target_tile = target_tile
+                self.last_target_tile = target_tile
+            else:
+                self.last_target_tile = None  # No path found: try again next time
 
         self.path_timer = current_time + 700 + random.randint(0, 300)
 
@@ -504,8 +505,10 @@ class EnemyBullet(pygame.sprite.Sprite):
 
     def check_collision(self) -> None:
         """Checks for collisions with obstacles and destroys the bullet on impact."""
-        if any(obstacle.hitbox.colliderect(self.rect) for
-               obstacle in self.collision_sprites.near(self.rect)):
+        core = pygame.FRect(0, 0, 12, 12)  # The orb's core, not its glow
+        core.center = self.rect.center
+        if any(obstacle.hitbox.colliderect(core) for
+               obstacle in self.collision_sprites.near(core)):
             self.explode()
 
     def check_range(self) -> None:
